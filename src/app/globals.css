@@ -168,6 +168,7 @@
 .currency {
   font-variant-numeric: tabular-nums;
   font-family: var(--font-geist-mono);
+  letter-spacing: -0.02em;
 }
 
 /* Safe area for mobile */
@@ -177,4 +178,50 @@
 
 .safe-top {
   padding-top: env(safe-area-inset-top);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Better focus styles */
+@layer base {
+  *:focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Card hover effects */
+@layer components {
+  .card-hover {
+    @apply transition-all duration-200 ease-out hover:shadow-md hover:-translate-y-0.5;
+  }
+}
+
+/* Desktop-specific refinements */
+@media (min-width: 768px) {
+  /* Smoother animations on capable devices */
+  * {
+    @apply transition-colors duration-150;
+  }
+
+  /* Better scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--muted);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+  }
 }

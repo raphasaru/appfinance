@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
+import { Sidebar } from "@/components/layout/sidebar";
 import { QueryProvider } from "@/components/providers/query-provider";
 
 export default async function DashboardLayout({
@@ -25,8 +26,22 @@ export default async function DashboardLayout({
   return (
     <QueryProvider>
       <div className="min-h-screen bg-background">
-        <Header userName={profile?.full_name} />
-        <main className="pb-20 md:pb-4">{children}</main>
+        {/* Desktop Sidebar */}
+        <Sidebar userName={profile?.full_name} />
+
+        {/* Mobile Header */}
+        <div className="md:hidden">
+          <Header userName={profile?.full_name} />
+        </div>
+
+        {/* Main Content */}
+        <main className="pb-20 md:pb-8 md:pl-64">
+          <div className="md:px-6 md:py-6">
+            {children}
+          </div>
+        </main>
+
+        {/* Mobile Bottom Navigation */}
         <BottomNav />
       </div>
     </QueryProvider>
