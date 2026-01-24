@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,8 +21,14 @@ import {
   RefreshCw,
   Copy,
   Clock,
+  QrCode,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { QRCodeSVG } from "qrcode.react";
+
+// WhatsApp Business number for the bot
+const WHATSAPP_BOT_NUMBER = "551151988345";
 
 export default function WhatsAppConfigPage() {
   const [phoneInput, setPhoneInput] = useState("");
@@ -115,6 +121,19 @@ export default function WhatsAppConfigPage() {
   const isVerified = !!whatsappLink?.verified_at && !!whatsappLink?.whatsapp_lid;
   const needsVerification = whatsappLink && !isVerified;
 
+  // Generate WhatsApp click-to-chat URL with verification code
+  const whatsappUrl = useMemo(() => {
+    if (!whatsappLink?.verification_code) return null;
+    const message = encodeURIComponent(whatsappLink.verification_code);
+    return `https://wa.me/${WHATSAPP_BOT_NUMBER}?text=${message}`;
+  }, [whatsappLink?.verification_code]);
+
+  const handleOpenWhatsApp = () => {
+    if (whatsappUrl) {
+      window.open(whatsappUrl, "_blank");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
@@ -192,18 +211,69 @@ export default function WhatsAppConfigPage() {
             </div>
 
             {whatsappLink.verification_code && !isCodeExpired ? (
-              <div className="space-y-2">
-                <p className="text-sm text-muted-foreground">Código de verificação:</p>
-                <div className="flex items-center gap-2">
-                  <div className="flex-1 p-4 bg-primary/5 border-2 border-dashed border-primary/20 rounded-lg text-center">
-                    <span className="text-2xl font-mono font-bold tracking-widest text-primary">
-                      {whatsappLink.verification_code}
-                    </span>
+              <div className="space-y-4">
+                {/* Option 1: QR Code */}
+                <div className="p-4 bg-white border rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <QrCode className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-medium">Opção 1: Escaneie o QR Code</span>
                   </div>
-                  <Button variant="outline" size="icon" onClick={handleCopyCode}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
+                  <div className="flex justify-center p-4 bg-white rounded-lg">
+                    {whatsappUrl && (
+                      <QRCodeSVG
+                        value={whatsappUrl}
+                        size={180}
+                        level="M"
+                        includeMargin={true}
+                        bgColor="#ffffff"
+                        fgColor="#000000"
+                      />
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Escaneie com a câmera do celular para abrir o WhatsApp com o código
+                  </p>
                 </div>
+
+                {/* Option 2: Click to open WhatsApp */}
+                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ExternalLink className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Opção 2: Abrir no WhatsApp</span>
+                  </div>
+                  <Button
+                    onClick={handleOpenWhatsApp}
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Enviar código pelo WhatsApp
+                  </Button>
+                  <p className="text-xs text-green-700 text-center mt-2">
+                    Clique para abrir o WhatsApp com o código já preenchido
+                  </p>
+                </div>
+
+                {/* Option 3: Manual code */}
+                <div className="p-4 bg-muted/50 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Copy className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Opção 3: Copiar código manualmente</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex-1 p-3 bg-white border-2 border-dashed border-primary/20 rounded-lg text-center">
+                      <span className="text-xl font-mono font-bold tracking-widest text-primary">
+                        {whatsappLink.verification_code}
+                      </span>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={handleCopyCode}>
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Copie e envie para +55 11 5198-8345
+                  </p>
+                </div>
+
                 <p className="text-xs text-muted-foreground text-center">
                   Código válido por 1 hora
                 </p>
@@ -211,7 +281,7 @@ export default function WhatsAppConfigPage() {
             ) : (
               <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg text-center">
                 <p className="text-sm text-amber-800">
-                  {isCodeExpired ? "Código expirado." : "Gere um código de verificação."}
+                  {isCodeExpired ? "Código expirado. Gere um novo código." : "Gere um código de verificação."}
                 </p>
               </div>
             )}
@@ -287,44 +357,19 @@ export default function WhatsAppConfigPage() {
         </Card>
       )}
 
-      {needsVerification && (
+      {needsVerification && whatsappLink?.verification_code && !isCodeExpired && (
         <Card className="bg-blue-50/50 border-blue-200">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base">Como verificar</CardTitle>
+            <CardTitle className="text-base flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-blue-600" />
+              Dica
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
-                1
-              </div>
-              <div>
-                <p className="text-sm text-blue-900">
-                  Abra o WhatsApp e envie uma mensagem para <strong>+55 11 5198-8345</strong>
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
-                2
-              </div>
-              <div>
-                <p className="text-sm text-blue-900">
-                  Envie apenas o código de 6 caracteres mostrado acima
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <div className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
-                3
-              </div>
-              <div>
-                <p className="text-sm text-blue-900">
-                  Você receberá uma confirmação quando estiver vinculado
-                </p>
-              </div>
-            </div>
+          <CardContent>
+            <p className="text-sm text-blue-900">
+              Escolha uma das 3 opções acima para enviar o código de verificação.
+              A forma mais rápida é usar o <strong>botão verde "Enviar código pelo WhatsApp"</strong> que já abre a conversa com o código preenchido.
+            </p>
           </CardContent>
         </Card>
       )}

@@ -49,17 +49,34 @@ export function useLinkWhatsApp() {
       // Normalize phone number (remove non-digits, ensure country code)
       const normalized = normalizePhoneNumber(phoneNumber);
 
+      // Check if phone number is already used by another user
+      const { data: existingLink } = await supabase
+        .from("user_whatsapp_links")
+        .select("user_id")
+        .eq("phone_number", normalized)
+        .maybeSingle();
+
+      if (existingLink && existingLink.user_id !== user.id) {
+        throw new Error("Este número já está vinculado a outra conta");
+      }
+
       // Generate verification code with 1-hour expiry
       const verificationCode = generateVerificationCode();
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
+      // Use upsert to handle both new links and re-links
       const { data, error } = await supabase
         .from("user_whatsapp_links")
-        .insert({
+        .upsert({
           user_id: user.id,
           phone_number: normalized,
           verification_code: verificationCode,
           verification_expires_at: expiresAt,
+          // Clear verification status for re-linking
+          whatsapp_lid: null,
+          verified_at: null,
+        }, {
+          onConflict: "user_id",
         })
         .select()
         .single();
