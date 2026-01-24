@@ -144,16 +144,7 @@ export default function LoginPage() {
                 />
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Senha</Label>
-                  <button
-                    type="button"
-                    onClick={() => router.push("/esqueci-senha")}
-                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
-                  >
-                    Esqueceu a senha?
-                  </button>
-                </div>
+                <Label htmlFor="password">Senha</Label>
                 <Input
                   id="password"
                   type="password"
@@ -171,6 +162,14 @@ export default function LoginPage() {
                 )}
               </Button>
             </form>
+            <div className="mt-3 text-center">
+              <Link
+                href="/esqueci-senha"
+                className="text-sm text-muted-foreground hover:text-primary hover:underline"
+              >
+                Esqueceu sua senha?
+              </Link>
+            </div>
           </TabsContent>
         </Tabs>
 

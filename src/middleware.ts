@@ -36,7 +36,9 @@ export async function middleware(request: NextRequest) {
   // Protected routes
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
-    request.nextUrl.pathname.startsWith("/cadastro");
+    request.nextUrl.pathname.startsWith("/cadastro") ||
+    request.nextUrl.pathname.startsWith("/esqueci-senha") ||
+    request.nextUrl.pathname.startsWith("/redefinir-senha");
   const isProtectedRoute =
     !isAuthPage &&
     !request.nextUrl.pathname.startsWith("/auth") &&
