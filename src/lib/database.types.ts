@@ -251,21 +251,30 @@ export type Database = {
           id: string
           phone_number: string
           user_id: string
+          verification_code: string | null
+          verification_expires_at: string | null
           verified_at: string | null
+          whatsapp_lid: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           phone_number: string
           user_id: string
+          verification_code?: string | null
+          verification_expires_at?: string | null
           verified_at?: string | null
+          whatsapp_lid?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           phone_number?: string
           user_id?: string
+          verification_code?: string | null
+          verification_expires_at?: string | null
           verified_at?: string | null
+          whatsapp_lid?: string | null
         }
         Relationships: []
       }
