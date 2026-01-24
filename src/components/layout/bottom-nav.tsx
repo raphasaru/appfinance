@@ -2,14 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Receipt, Clock, TrendingUp, Settings } from "lucide-react";
+import { Home, PiggyBank, Wallet, BarChart3, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Início", icon: Home },
-  { href: "/transacoes", label: "Transações", icon: Receipt },
-  { href: "/historico", label: "Histórico", icon: Clock },
-  { href: "/investimentos", label: "Carteira", icon: TrendingUp },
+  { href: "/orcamento", label: "Orçamento", icon: PiggyBank },
+  { href: "/carteira", label: "Carteira", icon: Wallet },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
+  { href: "/perfil", label: "Perfil", icon: User },
 ];
 
 export function BottomNav() {

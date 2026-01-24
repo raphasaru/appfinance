@@ -61,13 +61,13 @@ export default function TransacoesPage() {
       {/* Desktop Header */}
       <div className="hidden md:block">
         <PageHeader
-          title="Transacoes"
+          title="Transações"
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
           action={
             <Button onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Transacao
+              Nova Transação
             </Button>
           }
         />
@@ -153,7 +153,7 @@ export default function TransacoesPage() {
           {/* Summary Card */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Resumo do Mes</CardTitle>
+              <CardTitle className="text-sm font-medium">Resumo do Mês</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
@@ -188,7 +188,7 @@ export default function TransacoesPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">
-                {filter === "all" && "Todas as Transacoes"}
+                {filter === "all" && "Todas as Transações"}
                 {filter === "income" && "Receitas"}
                 {filter === "expense" && "Despesas"}
               </CardTitle>
@@ -217,8 +217,8 @@ export default function TransacoesPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Receipt className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>Nenhuma transacao encontrada</p>
-                <p className="text-sm mt-1">Clique em "Nova Transacao" para adicionar</p>
+                <p>Nenhuma transação encontrada</p>
+                <p className="text-sm mt-1">Clique em "Nova Transação" para adicionar</p>
               </div>
             )}
           </CardContent>
@@ -243,7 +243,7 @@ export default function TransacoesPage() {
           ))
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Nenhuma transacao encontrada</p>
+            <p>Nenhuma transação encontrada</p>
           </div>
         )}
       </div>

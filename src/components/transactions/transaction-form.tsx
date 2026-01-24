@@ -37,11 +37,11 @@ import { Loader2 } from "lucide-react";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
 
 const formSchema = z.object({
-  description: z.string().min(1, "Descricao obrigatoria"),
-  amount: z.string().min(1, "Valor obrigatorio"),
+  description: z.string().min(1, "Descrição obrigatória"),
+  amount: z.string().min(1, "Valor obrigatório"),
   type: z.enum(["income", "expense"]),
   category: z.string().optional(),
-  due_date: z.string().min(1, "Data obrigatoria"),
+  due_date: z.string().min(1, "Data obrigatória"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -125,15 +125,15 @@ export function TransactionForm({
     try {
       if (isEditing && transaction) {
         await updateMutation.mutateAsync({ id: transaction.id, ...payload });
-        toast.success("Transacao atualizada!");
+        toast.success("Transação atualizada!");
       } else {
         await createMutation.mutateAsync(payload);
-        toast.success("Transacao criada!");
+        toast.success("Transação criada!");
       }
       onOpenChange(false);
       form.reset();
     } catch {
-      toast.error("Erro ao salvar transacao");
+      toast.error("Erro ao salvar transação");
     }
   };
 
@@ -170,10 +170,10 @@ export function TransactionForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="description">Descricao</Label>
+          <Label htmlFor="description">Descrição</Label>
           <Input
             id="description"
-            placeholder="Ex: Aluguel, Salario..."
+            placeholder="Ex: Aluguel, Salário..."
             {...form.register("description")}
           />
           {form.formState.errors.description && (
@@ -218,7 +218,7 @@ export function TransactionForm({
         {isPending ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : isEditing ? (
-          "Salvar alteracoes"
+          "Salvar alterações"
         ) : (
           "Adicionar"
         )}
@@ -233,7 +233,7 @@ export function TransactionForm({
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? "Editar transacao" : "Nova transacao"}
+              {isEditing ? "Editar transação" : "Nova transação"}
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4">
@@ -250,7 +250,7 @@ export function TransactionForm({
       <SheetContent side="bottom" className="h-[85vh] rounded-t-xl px-4">
         <SheetHeader className="text-left">
           <SheetTitle>
-            {isEditing ? "Editar transacao" : "Nova transacao"}
+            {isEditing ? "Editar transação" : "Nova transação"}
           </SheetTitle>
         </SheetHeader>
         <div className="mt-6 overflow-y-auto flex-1">

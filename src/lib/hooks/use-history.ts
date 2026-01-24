@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface MonthlyData {
   month: string;
@@ -48,7 +49,7 @@ export function useMonthlyHistory(months: number = 6) {
         );
 
         results.push({
-          month: format(month, "MMM"),
+          month: format(month, "MMM", { locale: ptBR }),
           income: summary.income,
           expenses: summary.expenses,
           balance: summary.income - summary.expenses,

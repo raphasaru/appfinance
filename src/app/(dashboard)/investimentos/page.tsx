@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
 type Investment = Tables<"investments">;
 
 const investmentTypes = [
-  { value: "stock", label: "Acoes", icon: BarChart3 },
+  { value: "stock", label: "Ações", icon: BarChart3 },
   { value: "fund", label: "Fundos", icon: Briefcase },
   { value: "fixed_income", label: "Renda Fixa", icon: Landmark },
   { value: "crypto", label: "Cripto", icon: Bitcoin },
@@ -73,7 +73,7 @@ export default function InvestimentosPage() {
     e.preventDefault();
 
     if (!formData.name || !formData.type) {
-      toast.error("Preencha os campos obrigatorios");
+      toast.error("Preencha os campos obrigatórios");
       return;
     }
 
@@ -104,7 +104,7 @@ export default function InvestimentosPage() {
   const handleDelete = (id: string) => {
     if (confirm("Deseja excluir este investimento?")) {
       deleteMutation.mutate(id, {
-        onSuccess: () => toast.success("Investimento excluido"),
+        onSuccess: () => toast.success("Investimento excluído"),
         onError: () => toast.error("Erro ao excluir"),
       });
     }
@@ -165,7 +165,7 @@ export default function InvestimentosPage() {
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="average_price">Preco medio</Label>
+          <Label htmlFor="average_price">Preço médio</Label>
           <Input
             id="average_price"
             placeholder="R$ 0,00"
@@ -176,7 +176,7 @@ export default function InvestimentosPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="current_price">Preco atual</Label>
+          <Label htmlFor="current_price">Preço atual</Label>
           <Input
             id="current_price"
             placeholder="R$ 0,00"
@@ -228,7 +228,7 @@ export default function InvestimentosPage() {
             <div className="relative">
               <div className="flex items-center gap-2 text-primary-foreground/80">
                 <TrendingUp className="h-5 w-5" />
-                <span className="text-sm font-medium">Patrimonio Total</span>
+                <span className="text-sm font-medium">Patrimônio Total</span>
               </div>
               <p className="text-4xl font-bold mt-2 currency tracking-tight">
                 {formatCurrency(totalValue)}

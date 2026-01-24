@@ -6,23 +6,26 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import {
   Home,
-  Receipt,
+  PiggyBank,
   BarChart3,
-  TrendingUp,
   RefreshCw,
   LogOut,
-  Wallet
+  Wallet,
+  User,
+  Receipt
 } from "lucide-react";
 
 const mainNavItems = [
-  { href: "/dashboard", label: "Inicio", icon: Home },
-  { href: "/transacoes", label: "Transacoes", icon: Receipt },
-  { href: "/historico", label: "Historico", icon: BarChart3 },
-  { href: "/investimentos", label: "Investimentos", icon: TrendingUp },
+  { href: "/dashboard", label: "Início", icon: Home },
+  { href: "/orcamento", label: "Orçamento", icon: PiggyBank },
+  { href: "/carteira", label: "Carteira", icon: Wallet },
+  { href: "/relatorios", label: "Relatórios", icon: BarChart3 },
 ];
 
 const secondaryNavItems = [
+  { href: "/transacoes", label: "Transações", icon: Receipt },
   { href: "/recorrentes", label: "Recorrentes", icon: RefreshCw },
+  { href: "/perfil", label: "Perfil", icon: User },
 ];
 
 interface SidebarProps {
@@ -59,7 +62,7 @@ export function Sidebar({ userName }: SidebarProps) {
         <div className="flex flex-col">
           <span className="font-semibold text-base tracking-tight">Meu Bolso</span>
           <span className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
-            Financas Pessoais
+            Finanças Pessoais
           </span>
         </div>
       </div>
@@ -96,7 +99,7 @@ export function Sidebar({ userName }: SidebarProps) {
         {/* Secondary Navigation */}
         <div className="mb-2 px-3">
           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-            Configuracoes
+            Configurações
           </span>
         </div>
         {secondaryNavItems.map((item) => {
@@ -126,7 +129,7 @@ export function Sidebar({ userName }: SidebarProps) {
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{userName || "Usuario"}</p>
+            <p className="text-sm font-medium truncate">{userName || "Usuário"}</p>
             <p className="text-xs text-muted-foreground">Conta pessoal</p>
           </div>
         </div>

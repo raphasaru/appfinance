@@ -52,13 +52,13 @@ export function TransactionsList({
           <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center mb-4">
             <Plus className="h-6 w-6 text-muted-foreground" />
           </div>
-          <h3 className="font-semibold mb-1">Nenhuma transacao neste mes</h3>
+          <h3 className="font-semibold mb-1">Nenhuma transação neste mês</h3>
           <p className="text-sm text-muted-foreground mb-4">
             Comece adicionando sua primeira receita ou despesa
           </p>
           <Button onClick={onAdd}>
             <Plus className="h-4 w-4 mr-2" />
-            Nova Transacao
+            Nova Transação
           </Button>
         </CardContent>
       </Card>
@@ -98,7 +98,7 @@ export function TransactionsList({
         <CardContent className="space-y-2">
           {pendingTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">Nenhuma transacao pendente</p>
+              <p className="text-sm">Nenhuma transação pendente</p>
             </div>
           ) : (
             pendingTransactions.map((transaction) => (
@@ -112,7 +112,7 @@ export function TransactionsList({
         </CardContent>
       </Card>
 
-      {/* Concluidas */}
+      {/* Concluídas */}
       <Card className={cn(
         completedTransactions.length === 0 && "hidden lg:block"
       )}>
@@ -122,7 +122,7 @@ export function TransactionsList({
               <CheckCircle2 className="h-4 w-4 text-income" />
             </div>
             <CardTitle className="text-base font-semibold">
-              Concluidas
+              Concluídas
             </CardTitle>
             <span className="text-xs bg-income/10 text-income px-2 py-0.5 rounded-full font-medium">
               {completedTransactions.length}
@@ -132,7 +132,7 @@ export function TransactionsList({
         <CardContent className="space-y-2">
           {completedTransactions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p className="text-sm">Nenhuma transacao concluida</p>
+              <p className="text-sm">Nenhuma transação concluída</p>
             </div>
           ) : (
             completedTransactions.map((transaction) => (

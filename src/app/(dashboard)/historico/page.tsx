@@ -26,7 +26,7 @@ import {
 
 const COLORS = ["#4A6741", "#2D7A4F", "#6B8C5F", "#D4A84B", "#C45C4A", "#8BA882", "#E4B85B", "#D4736A", "#5A7A51"];
 
-export default function HistoricoPage() {
+export default function HistóricoPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const { data: history, isLoading: historyLoading } = useMonthlyHistory(6);
   const { data: categoryData, isLoading: categoryLoading } = useCategoryBreakdown(currentMonth);
@@ -37,13 +37,13 @@ export default function HistoricoPage() {
     <div className="space-y-6">
       {/* Mobile Header */}
       <div className="p-4 md:hidden">
-        <h1 className="text-xl font-semibold">Historico</h1>
+        <h1 className="text-xl font-semibold">Histórico</h1>
       </div>
 
       {/* Desktop Header */}
       <div className="hidden md:block">
         <PageHeader
-          title="Historico"
+          title="Histórico"
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
         />
@@ -55,7 +55,7 @@ export default function HistoricoPage() {
           <CardHeader className="pb-2">
             <div className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
-              <CardTitle className="text-base md:text-lg">Evolucao dos Ultimos 6 Meses</CardTitle>
+              <CardTitle className="text-base md:text-lg">Evolução dos Últimos 6 Meses</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
