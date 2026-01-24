@@ -146,12 +146,13 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
-                  <Link
-                    href="/esqueci-senha"
-                    className="text-xs text-muted-foreground hover:text-primary"
+                  <button
+                    type="button"
+                    onClick={() => router.push("/esqueci-senha")}
+                    className="text-xs text-muted-foreground hover:text-primary hover:underline"
                   >
                     Esqueceu a senha?
-                  </Link>
+                  </button>
                 </div>
                 <Input
                   id="password"
