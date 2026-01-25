@@ -12,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, Settings, Share2, LogOut, RefreshCw } from "lucide-react";
+import { Bell, Settings, Share2, LogOut, RefreshCw, CreditCard, MessageCircle } from "lucide-react";
+import { PlanBadge } from "@/components/subscription/plan-badge";
 
 interface HeaderProps {
   userName?: string | null;
@@ -102,6 +103,7 @@ export function Header({ userName }: HeaderProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <PlanBadge className="hidden xs:inline-flex" />
               <Button variant="ghost" size="icon" className="h-9 w-9 relative">
                 <Bell className="h-5 w-5 text-muted-foreground" />
                 <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-primary" />
@@ -117,9 +119,17 @@ export function Header({ userName }: HeaderProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem onClick={() => router.push("/configuracoes/assinatura")}>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Assinatura
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push("/configuracoes/whatsapp")}>
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    WhatsApp
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/perfil")}>
                     <Settings className="mr-2 h-4 w-4" />
-                    Configurações
+                    Perfil
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push("/recorrentes")}>
                     <RefreshCw className="mr-2 h-4 w-4" />

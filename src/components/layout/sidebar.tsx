@@ -12,8 +12,11 @@ import {
   LogOut,
   Wallet,
   User,
-  Receipt
+  Receipt,
+  MessageCircle,
+  CreditCard,
 } from "lucide-react";
+import { PlanBadge } from "@/components/subscription/plan-badge";
 
 const mainNavItems = [
   { href: "/dashboard", label: "Início", icon: Home },
@@ -25,6 +28,8 @@ const mainNavItems = [
 const secondaryNavItems = [
   { href: "/transacoes", label: "Transações", icon: Receipt },
   { href: "/recorrentes", label: "Recorrentes", icon: RefreshCw },
+  { href: "/configuracoes/whatsapp", label: "WhatsApp", icon: MessageCircle },
+  { href: "/configuracoes/assinatura", label: "Assinatura", icon: CreditCard },
   { href: "/perfil", label: "Perfil", icon: User },
 ];
 
@@ -129,7 +134,10 @@ export function Sidebar({ userName }: SidebarProps) {
             {initials}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{userName || "Usuário"}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-medium truncate">{userName || "Usuário"}</p>
+              <PlanBadge showIcon={false} />
+            </div>
             <p className="text-xs text-muted-foreground">Conta pessoal</p>
           </div>
         </div>

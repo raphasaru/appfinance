@@ -293,6 +293,48 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          created_at: string | null
+          current_period_end: string | null
+          id: string
+          plan: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string | null
+          whatsapp_messages_reset_at: string | null
+          whatsapp_messages_used: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_messages_reset_at?: string | null
+          whatsapp_messages_used?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          current_period_end?: string | null
+          id?: string
+          plan?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          whatsapp_messages_reset_at?: string | null
+          whatsapp_messages_used?: number | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           amount: number
@@ -382,7 +424,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      increment_whatsapp_message: {
+        Args: { p_user_id: string }
+        Returns: {
+          success: boolean
+          messages_used: number
+          messages_limit: number
+        }[]
+      }
+      reset_whatsapp_messages_if_needed: {
+        Args: { p_user_id: string }
+        Returns: {
+          messages_used: number
+          messages_limit: number
+          needs_reset: boolean
+        }[]
+      }
     }
     Enums: {
       expense_category:
@@ -412,3 +469,8 @@ export type TablesUpdate<T extends keyof Database["public"]["Tables"]> =
   Database["public"]["Tables"][T]["Update"]
 export type Enums<T extends keyof Database["public"]["Enums"]> =
   Database["public"]["Enums"][T]
+
+// Subscription types
+export type SubscriptionPlan = 'free' | 'pro' | 'pro_annual'
+export type SubscriptionStatus = 'active' | 'canceled' | 'past_due' | 'trialing'
+export type Subscription = Tables<'subscriptions'>
