@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { stripe } from '@/lib/stripe/client'
+import { getStripe } from '@/lib/stripe/client'
 import { PLANS, type Plan } from '@/lib/stripe/plans'
 import type { SubscriptionPlan } from '@/lib/database.types'
 
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
     if (!customerId) {
       // Create a new Stripe customer
-      const customer = await stripe.customers.create({
+      const customer = await getStripe().customers.create({
         email: user.email,
         metadata: {
           user_id: user.id,
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fin.prizely.com.br'
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       payment_method_types: ['card'],
       line_items: [
