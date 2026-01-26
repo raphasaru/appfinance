@@ -160,57 +160,66 @@ function extractTransactionsFallback(messageText: string): ExtractedTransaction[
   const transactions: ExtractedTransaction[] = [];
   const text = messageText.toLowerCase();
 
-  // Try expense pattern (expense with verb)
-  let match: RegExpExecArray | null;
-  const expensePattern = /(?:gastei|paguei|comprei|pagar|gastar)\s+(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?\s*(?:em|de|no|na|com)?\s*(.+?)(?:\.|,|$)/gi;
-  while ((match = expensePattern.exec(text)) !== null) {
-    const amount = parseFloat(match[1].replace(",", "."));
-    const description = match[2].trim();
-    if (amount > 0 && description) {
-      transactions.push({
-        description: description.charAt(0).toUpperCase() + description.slice(1),
-        amount,
-        type: "expense",
-        category: inferCategory(description),
-      });
-    }
-  }
+  // Split by " e " or "," to handle multiple items
+  // Example: "gastei 50 no uber, 200 no mercado e recebi 500 de freelance"
+  const segments = text.split(/\s+e\s+|\s*,\s*/);
 
-  // Try income pattern
-  const incomePattern = /(?:recebi|ganhei|entrou)\s+(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?\s*(?:de|do|da)?\s*(.+?)(?:\.|,|$)/gi;
-  while ((match = incomePattern.exec(text)) !== null) {
-    const amount = parseFloat(match[1].replace(",", "."));
-    const description = match[2].trim();
-    if (amount > 0 && description) {
-      transactions.push({
-        description: description.charAt(0).toUpperCase() + description.slice(1),
-        amount,
-        type: "income",
-        category: null,
-      });
-    }
-  }
+  // Track context from previous segments
+  let lastType: "income" | "expense" | null = null;
 
-  // If no matches, try simple extraction
-  if (transactions.length === 0) {
-    const simpleMatch = text.match(/(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?/);
-    if (simpleMatch) {
-      const amount = parseFloat(simpleMatch[1].replace(",", "."));
-      const isIncome = /recebi|ganhei|salário|salario|freelance|venda|entrou/.test(text);
-      const description = text
-        .replace(/(?:r\$\s*)?\d+(?:[.,]\d{2})?\s*(?:reais|real)?/g, "")
-        .replace(/gastei|paguei|comprei|recebi|ganhei|de|em|no|na|com/gi, "")
-        .trim();
+  for (const segment of segments) {
+    const trimmed = segment.trim();
+    if (!trimmed) continue;
 
-      if (amount > 0) {
-        transactions.push({
-          description: description.charAt(0).toUpperCase() + description.slice(1) || (isIncome ? "Receita" : "Despesa"),
-          amount,
-          type: isIncome ? "income" : "expense",
-          category: isIncome ? null : inferCategory(text),
-        });
-      }
+    // Check if this segment has an explicit verb
+    const hasExpenseVerb = /gastei|paguei|comprei|pagar|gastar/.test(trimmed);
+    const hasIncomeVerb = /recebi|ganhei|entrou/.test(trimmed);
+
+    // Determine transaction type
+    let transactionType: "income" | "expense";
+    if (hasIncomeVerb) {
+      transactionType = "income";
+      lastType = "income";
+    } else if (hasExpenseVerb) {
+      transactionType = "expense";
+      lastType = "expense";
+    } else if (lastType) {
+      // Inherit from previous segment (e.g., "gastei 50 uber, 200 mercado")
+      transactionType = lastType;
+    } else {
+      // Default to expense if no context
+      transactionType = "expense";
     }
+
+    // Extract amount and description
+    // Pattern: "verb? amount preposition? description" or "amount preposition? description"
+    const amountMatch = trimmed.match(/(?:r\$\s*)?(\d+(?:[.,]\d{2})?)/);
+    if (!amountMatch) continue;
+
+    const amount = parseFloat(amountMatch[1].replace(",", "."));
+    if (amount <= 0) continue;
+
+    // Get description by removing the verb, amount, and common prepositions
+    let description = trimmed
+      .replace(/gastei|paguei|comprei|pagar|gastar|recebi|ganhei|entrou/gi, "")
+      .replace(/(?:r\$\s*)?\d+(?:[.,]\d{2})?\s*(?:reais|real)?/g, "")
+      .replace(/^\s*(?:em|de|no|na|com|do|da)\s+/i, "")
+      .replace(/\s+(?:em|de|no|na|com|do|da)\s+/gi, " ")
+      .trim();
+
+    // Clean up description
+    if (description) {
+      description = description.charAt(0).toUpperCase() + description.slice(1);
+    } else {
+      description = transactionType === "income" ? "Receita" : "Despesa";
+    }
+
+    transactions.push({
+      description,
+      amount,
+      type: transactionType,
+      category: transactionType === "expense" ? inferCategory(description) : null,
+    });
   }
 
   return transactions;
