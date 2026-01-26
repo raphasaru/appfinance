@@ -347,6 +347,7 @@ export type Database = {
           is_recurring: boolean | null
           notes: string | null
           recurring_day: number | null
+          source: "app" | "whatsapp" | null
           status: Database["public"]["Enums"]["transaction_status"] | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string | null
@@ -363,6 +364,7 @@ export type Database = {
           is_recurring?: boolean | null
           notes?: string | null
           recurring_day?: number | null
+          source?: "app" | "whatsapp" | null
           status?: Database["public"]["Enums"]["transaction_status"] | null
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string | null
@@ -379,6 +381,7 @@ export type Database = {
           is_recurring?: boolean | null
           notes?: string | null
           recurring_day?: number | null
+          source?: "app" | "whatsapp" | null
           status?: Database["public"]["Enums"]["transaction_status"] | null
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string | null

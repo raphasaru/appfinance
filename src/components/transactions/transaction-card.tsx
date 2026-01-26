@@ -17,8 +17,13 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   LucideIcon,
+  Check,
+  Clock,
+  Loader2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useCompleteTransaction, useUncompleteTransaction } from "@/lib/hooks/use-transactions";
+import { toast } from "sonner";
 
 type Transaction = Tables<"transactions">;
 
@@ -55,7 +60,12 @@ interface TransactionCardProps {
 
 export function TransactionCard({ transaction, onEdit }: TransactionCardProps) {
   const isIncome = transaction.type === "income";
+  const isCompleted = transaction.status === "completed";
   const category = transaction.category as ExpenseCategory | null;
+
+  const completeMutation = useCompleteTransaction();
+  const uncompleteMutation = useUncompleteTransaction();
+  const isToggling = completeMutation.isPending || uncompleteMutation.isPending;
 
   // Get icon and color based on transaction type and category
   const Icon = isIncome
@@ -70,11 +80,49 @@ export function TransactionCard({ transaction, onEdit }: TransactionCardProps) {
     ? categoryColorMap[category]
     : "bg-slate-100 text-slate-600 dark:bg-slate-900/30 dark:text-slate-400";
 
+  const handleToggleStatus = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      if (isCompleted) {
+        await uncompleteMutation.mutateAsync(transaction.id);
+        toast.success("Transação marcada como pendente");
+      } else {
+        await completeMutation.mutateAsync(transaction.id);
+        toast.success("Transação marcada como paga");
+      }
+    } catch {
+      toast.error("Erro ao atualizar transação");
+    }
+  };
+
   return (
     <div
       onClick={() => onEdit?.(transaction)}
-      className="flex items-center gap-3 p-3 rounded-xl bg-card border border-border hover:border-primary/30 cursor-pointer transition-colors"
+      className={cn(
+        "flex items-center gap-3 p-3 rounded-xl bg-card border cursor-pointer transition-colors",
+        isCompleted
+          ? "border-border hover:border-primary/30"
+          : "border-dashed border-muted-foreground/30 hover:border-primary/50"
+      )}
     >
+      {/* Status Toggle Button */}
+      <button
+        onClick={handleToggleStatus}
+        disabled={isToggling}
+        className={cn(
+          "flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors",
+          isCompleted
+            ? "bg-income border-income text-white"
+            : "border-muted-foreground/40 hover:border-primary hover:bg-primary/10"
+        )}
+      >
+        {isToggling ? (
+          <Loader2 className="h-3 w-3 animate-spin" />
+        ) : isCompleted ? (
+          <Check className="h-3 w-3" />
+        ) : null}
+      </button>
+
       {/* Category Icon */}
       <div className={cn("p-2.5 rounded-xl flex-shrink-0", iconColorClass)}>
         <Icon className="h-5 w-5" />
@@ -82,13 +130,27 @@ export function TransactionCard({ transaction, onEdit }: TransactionCardProps) {
 
       {/* Description and Meta */}
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{transaction.description}</p>
+        <p className={cn(
+          "font-medium truncate",
+          !isCompleted && "text-muted-foreground"
+        )}>
+          {transaction.description}
+        </p>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
           <span>
             {format(new Date(transaction.due_date), "dd MMM", { locale: ptBR })}
           </span>
           <span className="text-muted-foreground/50">•</span>
           <span>{getCategoryLabel(category)}</span>
+          {!isCompleted && (
+            <>
+              <span className="text-muted-foreground/50">•</span>
+              <span className="flex items-center gap-0.5 text-amber-600 dark:text-amber-500">
+                <Clock className="h-3 w-3" />
+                Pendente
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -97,7 +159,8 @@ export function TransactionCard({ transaction, onEdit }: TransactionCardProps) {
         <span
           className={cn(
             "font-semibold currency",
-            isIncome ? "text-income" : "text-expense"
+            isIncome ? "text-income" : "text-expense",
+            !isCompleted && "opacity-70"
           )}
         >
           {isIncome ? "+" : "-"}{formatCurrency(Number(transaction.amount))}

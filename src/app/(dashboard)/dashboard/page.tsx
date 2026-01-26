@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
@@ -13,13 +13,17 @@ import { TransactionForm } from "@/components/transactions/transaction-form";
 import { useTransactions } from "@/lib/hooks/use-transactions";
 import { useMonthlySummary } from "@/lib/hooks/use-summary";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, ChevronRight } from "lucide-react";
 import { Tables } from "@/lib/database.types";
 
 type Transaction = Tables<"transactions">;
 
+type StatusFilter = "all" | "pending" | "completed";
+
 export default function DashboardPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
@@ -29,10 +33,26 @@ export default function DashboardPage() {
   const pendingTransactions = transactions?.filter((t) => t.status === "planned") || [];
   const completedTransactions = transactions?.filter((t) => t.status === "completed") || [];
 
-  // Get recent 5 transactions sorted by date
-  const recentTransactions = [...(transactions || [])]
-    .sort((a, b) => new Date(b.due_date).getTime() - new Date(a.due_date).getTime())
-    .slice(0, 5);
+  // Filter and sort transactions for mobile view
+  const filteredTransactions = useMemo(() => {
+    let result = transactions || [];
+
+    if (statusFilter === "pending") {
+      result = result.filter((t) => t.status === "planned");
+    } else if (statusFilter === "completed") {
+      result = result.filter((t) => t.status === "completed");
+    }
+
+    // Sort by date descending (most recent first)
+    return [...result].sort((a, b) =>
+      new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
+    );
+  }, [transactions, statusFilter]);
+
+  // Get recent 5 transactions sorted by date (for "all" filter display limit)
+  const displayTransactions = statusFilter === "all"
+    ? filteredTransactions.slice(0, 5)
+    : filteredTransactions;
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -94,10 +114,10 @@ export default function DashboardPage() {
         {/* Quick Actions */}
         <QuickActions />
 
-        {/* Recent Transactions */}
+        {/* Transactions with Filter */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Transações Recentes</h2>
+            <h2 className="text-base font-semibold">Transações</h2>
             <Link
               href="/transacoes"
               className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-light transition-colors"
@@ -107,25 +127,61 @@ export default function DashboardPage() {
             </Link>
           </div>
 
+          {/* Status Filter Tabs */}
+          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="all" className="text-xs">
+                Todas
+                <span className="ml-1.5 text-[10px] opacity-70">
+                  {transactions?.length || 0}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="pending" className="text-xs">
+                Pendentes
+                <span className="ml-1.5 text-[10px] opacity-70">
+                  {pendingTransactions.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="text-xs">
+                Concluídas
+                <span className="ml-1.5 text-[10px] opacity-70">
+                  {completedTransactions.length}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
           {transactionsLoading ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-16 bg-card rounded-xl animate-pulse" />
               ))}
             </div>
-          ) : recentTransactions.length > 0 ? (
+          ) : displayTransactions.length > 0 ? (
             <div className="space-y-2">
-              {recentTransactions.map((transaction) => (
+              {displayTransactions.map((transaction) => (
                 <TransactionCard
                   key={transaction.id}
                   transaction={transaction}
                   onEdit={handleEdit}
                 />
               ))}
+              {statusFilter === "all" && filteredTransactions.length > 5 && (
+                <Link
+                  href="/transacoes"
+                  className="block text-center py-3 text-sm text-primary hover:text-primary-light transition-colors"
+                >
+                  Ver mais {filteredTransactions.length - 5} transações
+                </Link>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground bg-card rounded-xl">
-              <p>Nenhuma transação neste mês</p>
+              <p>
+                {statusFilter === "pending" && "Nenhuma transação pendente"}
+                {statusFilter === "completed" && "Nenhuma transação concluída"}
+                {statusFilter === "all" && "Nenhuma transação neste mês"}
+              </p>
               <p className="text-sm mt-1">Toque no + para adicionar</p>
             </div>
           )}

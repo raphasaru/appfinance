@@ -5,6 +5,7 @@ import { HeroBalanceCard } from "@/components/dashboard/hero-balance-card";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { CategoryBudgetCard, CategoryBudget } from "@/components/reports/category-budget-card";
+import { CategoryPieChart } from "@/components/reports/category-pie-chart";
 import { useMonthlySummary } from "@/lib/hooks/use-summary";
 import { useMonthlyHistory } from "@/lib/hooks/use-history";
 import { useCategoryBudgets, useCategorySpending } from "@/lib/hooks/use-category-budgets";
@@ -76,6 +77,16 @@ export default function RelatoriosPage() {
   const totalSpent = budgetData.reduce((sum, b) => sum + b.spent, 0);
   const totalBudget = budgetData.reduce((sum, b) => sum + b.budget, 0);
   const budgetDifference = totalBudget - totalSpent;
+
+  // Prepare pie chart data
+  const pieChartData = budgetData
+    .filter((b) => b.spent > 0)
+    .map((b) => ({
+      category: b.category,
+      amount: b.spent,
+      percentage: totalSpent > 0 ? (b.spent / totalSpent) * 100 : 0,
+    }))
+    .sort((a, b) => b.amount - a.amount);
 
   return (
     <div className="space-y-6">
@@ -181,10 +192,13 @@ export default function RelatoriosPage() {
           </div>
         </div>
 
+        {/* Pie Chart - Category Distribution */}
+        <CategoryPieChart data={pieChartData} isLoading={spendingLoading} />
+
         {/* Category Spending */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Gastos por Categoria</h2>
+            <h2 className="text-base font-semibold">Orçamento por Categoria</h2>
             <span className="text-sm text-muted-foreground">
               {currentMonth.toLocaleDateString("pt-BR", {
                 month: "long",
@@ -339,14 +353,17 @@ export default function RelatoriosPage() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Pie Chart - Category Distribution */}
+              <CategoryPieChart data={pieChartData} isLoading={spendingLoading} />
             </div>
 
-            {/* Right Column - Category Spending */}
+            {/* Right Column - Category Budget */}
             <div className="space-y-6">
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold">Gastos por Categoria</CardTitle>
+                    <CardTitle className="text-base font-semibold">Orçamento por Categoria</CardTitle>
                     <span className="text-xs text-muted-foreground">
                       {currentMonth.toLocaleDateString("pt-BR", {
                         month: "short",

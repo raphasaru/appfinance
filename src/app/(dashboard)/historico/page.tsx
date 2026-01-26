@@ -181,7 +181,7 @@ export default function HistóricoPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <PieChartIcon className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>Nenhuma despesa neste mes</p>
+                <p>Nenhuma despesa neste mês</p>
               </div>
             )}
           </CardContent>
@@ -190,7 +190,7 @@ export default function HistóricoPage() {
         {/* Summary Card */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base md:text-lg">Resumo do Mes</CardTitle>
+            <CardTitle className="text-base md:text-lg">Resumo do Mês</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Income */}

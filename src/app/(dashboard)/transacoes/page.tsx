@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { TransactionCard } from "@/components/transactions/transaction-card";
@@ -10,26 +10,74 @@ import { useMonthlySummary } from "@/lib/hooks/use-summary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Filter, TrendingUp, TrendingDown, Receipt } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Filter, TrendingUp, TrendingDown, Receipt, ArrowUpDown, ArrowDown, ArrowUp } from "lucide-react";
 import { Tables } from "@/lib/database.types";
 import { formatCurrency } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils";
 
 type Transaction = Tables<"transactions">;
 
+type SortField = "date" | "description" | "amount";
+type SortOrder = "asc" | "desc";
+
+const sortLabels: Record<`${SortField}_${SortOrder}`, string> = {
+  date_desc: "Mais recentes",
+  date_asc: "Mais antigas",
+  description_asc: "A-Z",
+  description_desc: "Z-A",
+  amount_desc: "Maior valor",
+  amount_asc: "Menor valor",
+};
+
 export default function TransacoesPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [sortField, setSortField] = useState<SortField>("date");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [formOpen, setFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const { data: transactions, isLoading } = useTransactions(currentMonth);
   const { data: summary } = useMonthlySummary(currentMonth);
 
-  const filteredTransactions = transactions?.filter((t) => {
-    if (filter === "all") return true;
-    return t.type === filter;
-  }) || [];
+  const sortKey = `${sortField}_${sortOrder}` as `${SortField}_${SortOrder}`;
+
+  const filteredAndSortedTransactions = useMemo(() => {
+    let result = transactions?.filter((t) => {
+      if (filter === "all") return true;
+      return t.type === filter;
+    }) || [];
+
+    // Sort transactions
+    result = [...result].sort((a, b) => {
+      let comparison = 0;
+
+      switch (sortField) {
+        case "date":
+          comparison = new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          break;
+        case "description":
+          comparison = a.description.localeCompare(b.description, "pt-BR");
+          break;
+        case "amount":
+          comparison = Number(a.amount) - Number(b.amount);
+          break;
+      }
+
+      return sortOrder === "asc" ? comparison : -comparison;
+    });
+
+    return result;
+  }, [transactions, filter, sortField, sortOrder]);
+
+  const filteredTransactions = filteredAndSortedTransactions;
 
   const incomeTransactions = transactions?.filter((t) => t.type === "income") || [];
   const expenseTransactions = transactions?.filter((t) => t.type === "expense") || [];
@@ -73,8 +121,8 @@ export default function TransacoesPage() {
         />
       </div>
 
-      {/* Mobile Tabs */}
-      <div className="px-4 md:hidden">
+      {/* Mobile Tabs + Sort */}
+      <div className="px-4 md:hidden space-y-3">
         <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">Todas</TabsTrigger>
@@ -82,6 +130,36 @@ export default function TransacoesPage() {
             <TabsTrigger value="expense">Despesas</TabsTrigger>
           </TabsList>
         </Tabs>
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            {filteredTransactions.length} {filteredTransactions.length === 1 ? "item" : "itens"}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-8 gap-1.5">
+                <ArrowUpDown className="h-3.5 w-3.5" />
+                <span className="text-xs">{sortLabels[sortKey]}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuRadioGroup
+                value={sortKey}
+                onValueChange={(value) => {
+                  const [field, order] = value.split("_") as [SortField, SortOrder];
+                  setSortField(field);
+                  setSortOrder(order);
+                }}
+              >
+                <DropdownMenuRadioItem value="date_desc">Mais recentes</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="date_asc">Mais antigas</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="description_asc">A-Z</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="description_desc">Z-A</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="amount_desc">Maior valor</DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="amount_asc">Menor valor</DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
       {/* Desktop Layout */}
@@ -192,9 +270,36 @@ export default function TransacoesPage() {
                 {filter === "income" && "Receitas"}
                 {filter === "expense" && "Despesas"}
               </CardTitle>
-              <span className="text-sm text-muted-foreground">
-                {filteredTransactions.length} {filteredTransactions.length === 1 ? "item" : "itens"}
-              </span>
+              <div className="flex items-center gap-3">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-1.5">
+                      <ArrowUpDown className="h-3.5 w-3.5" />
+                      <span className="text-xs">{sortLabels[sortKey]}</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40">
+                    <DropdownMenuRadioGroup
+                      value={sortKey}
+                      onValueChange={(value) => {
+                        const [field, order] = value.split("_") as [SortField, SortOrder];
+                        setSortField(field);
+                        setSortOrder(order);
+                      }}
+                    >
+                      <DropdownMenuRadioItem value="date_desc">Mais recentes</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="date_asc">Mais antigas</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="description_asc">A-Z</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="description_desc">Z-A</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="amount_desc">Maior valor</DropdownMenuRadioItem>
+                      <DropdownMenuRadioItem value="amount_asc">Menor valor</DropdownMenuRadioItem>
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <span className="text-sm text-muted-foreground">
+                  {filteredTransactions.length} {filteredTransactions.length === 1 ? "item" : "itens"}
+                </span>
+              </div>
             </div>
           </CardHeader>
           <CardContent>

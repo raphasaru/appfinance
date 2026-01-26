@@ -97,20 +97,46 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (!messageText) {
+    // Detect message type (text, audio, image)
+    type MessageType = "text" | "audio" | "image" | "unknown";
+    let messageType: MessageType = "unknown";
+
+    // Check for audio message
+    const hasAudio = payload?.message?.audioMessage ||
+      payload?.message?.pttMessage ||
+      payload?.hasMedia && payload?.mimetype?.startsWith("audio/") ||
+      payload?.mediaType === "audio";
+
+    // Check for image message
+    const hasImage = payload?.message?.imageMessage ||
+      payload?.hasMedia && payload?.mimetype?.startsWith("image/") ||
+      payload?.mediaType === "image";
+
+    if (messageText) {
+      messageType = "text";
+    } else if (hasAudio) {
+      messageType = "audio";
+    } else if (hasImage) {
+      messageType = "image";
+    }
+
+    // Ignore messages without processable content
+    if (messageType === "unknown") {
       return new Response(
-        JSON.stringify({ success: true, message: "No text content" }),
+        JSON.stringify({ success: true, message: "No processable content" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("Message from " + senderId + ": " + messageText);
+    console.log("Message type: " + messageType + ", from " + senderId);
 
-    // Check if this is a verification code (6 alphanumeric characters)
+    console.log("Message from " + senderId + ": " + (messageText || `[${messageType}]`));
+
+    // Check if this is a verification code (6 alphanumeric characters) - only for text messages
     const verificationCodeRegex = /^[A-Z0-9]{6}$/i;
-    const trimmedMessage = messageText.trim().toUpperCase();
+    const trimmedMessage = messageText?.trim().toUpperCase() || "";
 
-    if (verificationCodeRegex.test(trimmedMessage)) {
+    if (messageType === "text" && verificationCodeRegex.test(trimmedMessage)) {
       console.log("Detected verification code: " + trimmedMessage);
       const result = await handleVerification(supabase, senderId, trimmedMessage);
       console.log("Verification result: " + JSON.stringify(result));
@@ -151,30 +177,70 @@ Deno.serve(async (req: Request) => {
 
     if (!link || !link.verified_at) {
       console.log("Unverified sender: " + senderId);
-      await sendWhatsAppMessage(
-        senderId,
-        "⚠️ Este número não está vinculado.\n\n" +
-        "Acesse o app *Meu Bolso* e vá em:\n" +
-        "Perfil → Configurações → WhatsApp\n\n" +
-        "Lá você poderá vincular seu número."
-      );
+      // Silently ignore messages from unverified numbers
       return new Response(
         JSON.stringify({ success: false, error: "Number not verified" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // TODO: Process transaction with AI
-    console.log("Verified user sent: " + messageText);
+    const userId = link.user_id;
 
-    // For now, acknowledge receipt
-    await sendWhatsAppMessage(
-      senderId,
-      "📝 Mensagem recebida! (Processamento de transações em breve)"
-    );
+    // Check current usage limit (without incrementing - trigger will handle that when transaction is created)
+    const { data: limitData } = await supabase
+      .rpc('reset_whatsapp_messages_if_needed', { p_user_id: userId });
+
+    const limitResult = limitData?.[0];
+    const messagesUsed = limitResult?.messages_used || 0;
+    const messagesLimit = limitResult?.messages_limit || 30;
+
+    // Check if user is at limit BEFORE processing
+    if (messagesUsed >= messagesLimit) {
+      console.log("User " + userId + " at WhatsApp limit: " + messagesUsed + "/" + messagesLimit);
+      const upgradeUrl = Deno.env.get("APP_URL") || "https://fin.prizely.com.br";
+      await sendWhatsAppMessage(
+        senderId,
+        "⚠️ *Limite de transações atingido*\n\n" +
+        "Você criou " + messagesUsed + " de " + messagesLimit + " transações via WhatsApp este mês.\n\n" +
+        "Para continuar usando o WhatsApp ilimitado, faça upgrade para o plano Pro:\n" +
+        "👉 " + upgradeUrl + "/pricing\n\n" +
+        "Seu limite será renovado no primeiro dia do próximo mês."
+      );
+      return new Response(
+        JSON.stringify({ success: false, error: "Limit reached", messagesUsed, messagesLimit }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("User " + userId + " usage: " + messagesUsed + "/" + messagesLimit);
+
+    // TODO: Process transaction with AI based on message type
+    // When create_whatsapp_transaction is called, the trigger will automatically
+    // increment the usage counter because source='whatsapp'
+    console.log("Verified user sent " + messageType + ": " + (messageText || "[media]"));
+
+    // For now, acknowledge receipt based on message type
+    let ackMessage = "";
+    if (messageType === "text") {
+      ackMessage = "📝 Mensagem recebida! (Processamento de transações em breve)";
+    } else if (messageType === "audio") {
+      ackMessage = "🎤 Áudio recebido! (Processamento de transações em breve)";
+    } else if (messageType === "image") {
+      ackMessage = "📸 Imagem recebida! (Processamento de transações em breve)";
+    }
+
+    await sendWhatsAppMessage(senderId, ackMessage);
 
     return new Response(
-      JSON.stringify({ success: true, message: "Message received", userId: link.user_id, text: messageText }),
+      JSON.stringify({
+        success: true,
+        message: "Message received",
+        userId: userId,
+        messageType: messageType,
+        text: messageText || null,
+        messagesUsed,
+        messagesLimit,
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
