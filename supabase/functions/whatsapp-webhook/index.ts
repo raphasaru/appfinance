@@ -11,6 +11,31 @@ const WAHA_URL = Deno.env.get("WAHA_URL") || "http://31.97.160.106:3008";
 const WAHA_API_KEY = Deno.env.get("WAHA_API_KEY") || "minha-chave-secreta-123";
 const WAHA_SESSION = "default";
 
+// Gemini API Configuration
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY") || "";
+const GEMINI_MODEL = "gemini-1.5-flash";
+
+// Expense categories mapping
+const EXPENSE_CATEGORIES = {
+  fixed_housing: ["aluguel", "condomínio", "condominio", "iptu", "prestação casa", "financiamento casa", "moradia"],
+  fixed_utilities: ["luz", "água", "agua", "gás", "gas", "internet", "telefone", "celular", "energia", "conta de luz", "conta de água"],
+  fixed_subscriptions: ["netflix", "spotify", "amazon", "disney", "hbo", "youtube", "assinatura", "streaming", "mensalidade"],
+  fixed_personal: ["academia", "plano de saúde", "plano de saude", "seguro", "escola", "faculdade", "curso"],
+  fixed_taxes: ["imposto", "taxa", "inss", "irpf", "ipva", "licenciamento"],
+  variable_credit: ["cartão", "cartao", "fatura", "parcela"],
+  variable_food: ["mercado", "supermercado", "restaurante", "lanche", "almoço", "almoco", "jantar", "café", "cafe", "comida", "ifood", "delivery", "padaria", "feira", "açougue", "acougue"],
+  variable_transport: ["uber", "99", "gasolina", "combustível", "combustivel", "estacionamento", "pedágio", "pedagio", "ônibus", "onibus", "metrô", "metro", "transporte", "passagem"],
+  variable_other: ["outros", "diversos", "compra", "presente", "roupa", "farmácia", "farmacia", "médico", "medico", "remédio", "remedio"],
+};
+
+// Transaction interface
+interface ExtractedTransaction {
+  description: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string | null;
+}
+
 async function sendWhatsAppMessage(to: string, text: string): Promise<boolean> {
   try {
     const response = await fetch(`${WAHA_URL}/api/sendText`, {
@@ -37,6 +62,254 @@ async function sendWhatsAppMessage(to: string, text: string): Promise<boolean> {
     console.error("Error sending WhatsApp message:", error);
     return false;
   }
+}
+
+// Extract transactions using Gemini AI
+async function extractTransactionsWithAI(messageText: string): Promise<ExtractedTransaction[]> {
+  if (!GEMINI_API_KEY) {
+    console.error("GEMINI_API_KEY not configured");
+    return extractTransactionsFallback(messageText);
+  }
+
+  const prompt = `Você é um assistente financeiro. Analise a mensagem do usuário e extraia TODAS as transações financeiras mencionadas.
+
+Para cada transação, retorne:
+- description: descrição curta da transação
+- amount: valor numérico (apenas números, sem R$)
+- type: "income" para receitas (salário, freelance, venda, recebimento) ou "expense" para despesas (gastos, compras, pagamentos)
+- category: uma das categorias abaixo (APENAS para despesas):
+  - fixed_housing: moradia (aluguel, condomínio, IPTU)
+  - fixed_utilities: contas (luz, água, gás, internet, telefone)
+  - fixed_subscriptions: assinaturas (Netflix, Spotify, streaming)
+  - fixed_personal: pessoal fixo (academia, plano de saúde, escola)
+  - fixed_taxes: impostos e taxas
+  - variable_credit: cartão de crédito
+  - variable_food: alimentação (mercado, restaurante, delivery)
+  - variable_transport: transporte (Uber, gasolina, estacionamento)
+  - variable_other: outros gastos
+
+IMPORTANTE:
+- Se houver múltiplos itens, retorne TODOS separadamente
+- Se o usuário mencionar "compras no mercado R$150 sendo R$50 de carne, R$30 de frutas e R$70 de limpeza", retorne 3 transações separadas
+- Para receitas (income), category deve ser null
+- Valores devem ser numéricos (50.00, não "R$ 50,00")
+- Se não conseguir identificar, retorne array vazio []
+
+Responda APENAS com um JSON array válido, sem texto adicional.
+
+Mensagem do usuário: "${messageText}"`;
+
+  try {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.1,
+            topP: 0.8,
+            maxOutputTokens: 1024,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error("Gemini API error:", await response.text());
+      return extractTransactionsFallback(messageText);
+    }
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    console.log("Gemini response:", text);
+
+    // Extract JSON from response (handle markdown code blocks)
+    let jsonText = text.trim();
+    if (jsonText.startsWith("```json")) {
+      jsonText = jsonText.slice(7);
+    } else if (jsonText.startsWith("```")) {
+      jsonText = jsonText.slice(3);
+    }
+    if (jsonText.endsWith("```")) {
+      jsonText = jsonText.slice(0, -3);
+    }
+    jsonText = jsonText.trim();
+
+    const transactions = JSON.parse(jsonText) as ExtractedTransaction[];
+
+    // Validate and clean transactions
+    return transactions
+      .filter((t) => t.description && typeof t.amount === "number" && t.amount > 0)
+      .map((t) => ({
+        description: t.description.slice(0, 100),
+        amount: Math.round(t.amount * 100) / 100,
+        type: t.type === "income" ? "income" : "expense",
+        category: t.type === "expense" ? (t.category || "variable_other") : null,
+      }));
+  } catch (error) {
+    console.error("Error extracting with AI:", error);
+    return extractTransactionsFallback(messageText);
+  }
+}
+
+// Fallback extraction without AI
+function extractTransactionsFallback(messageText: string): ExtractedTransaction[] {
+  const transactions: ExtractedTransaction[] = [];
+  const text = messageText.toLowerCase();
+
+  // Try expense pattern (expense with verb)
+  let match: RegExpExecArray | null;
+  const expensePattern = /(?:gastei|paguei|comprei|pagar|gastar)\s+(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?\s*(?:em|de|no|na|com)?\s*(.+?)(?:\.|,|$)/gi;
+  while ((match = expensePattern.exec(text)) !== null) {
+    const amount = parseFloat(match[1].replace(",", "."));
+    const description = match[2].trim();
+    if (amount > 0 && description) {
+      transactions.push({
+        description: description.charAt(0).toUpperCase() + description.slice(1),
+        amount,
+        type: "expense",
+        category: inferCategory(description),
+      });
+    }
+  }
+
+  // Try income pattern
+  const incomePattern = /(?:recebi|ganhei|entrou)\s+(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?\s*(?:de|do|da)?\s*(.+?)(?:\.|,|$)/gi;
+  while ((match = incomePattern.exec(text)) !== null) {
+    const amount = parseFloat(match[1].replace(",", "."));
+    const description = match[2].trim();
+    if (amount > 0 && description) {
+      transactions.push({
+        description: description.charAt(0).toUpperCase() + description.slice(1),
+        amount,
+        type: "income",
+        category: null,
+      });
+    }
+  }
+
+  // If no matches, try simple extraction
+  if (transactions.length === 0) {
+    const simpleMatch = text.match(/(?:r\$\s*)?(\d+(?:[.,]\d{2})?)\s*(?:reais|real)?/);
+    if (simpleMatch) {
+      const amount = parseFloat(simpleMatch[1].replace(",", "."));
+      const isIncome = /recebi|ganhei|salário|salario|freelance|venda|entrou/.test(text);
+      const description = text
+        .replace(/(?:r\$\s*)?\d+(?:[.,]\d{2})?\s*(?:reais|real)?/g, "")
+        .replace(/gastei|paguei|comprei|recebi|ganhei|de|em|no|na|com/gi, "")
+        .trim();
+
+      if (amount > 0) {
+        transactions.push({
+          description: description.charAt(0).toUpperCase() + description.slice(1) || (isIncome ? "Receita" : "Despesa"),
+          amount,
+          type: isIncome ? "income" : "expense",
+          category: isIncome ? null : inferCategory(text),
+        });
+      }
+    }
+  }
+
+  return transactions;
+}
+
+// Infer category from description
+function inferCategory(description: string): string {
+  const text = description.toLowerCase();
+
+  for (const [category, keywords] of Object.entries(EXPENSE_CATEGORIES)) {
+    for (const keyword of keywords) {
+      if (text.includes(keyword)) {
+        return category;
+      }
+    }
+  }
+
+  return "variable_other";
+}
+
+// Format currency for display
+function formatCurrency(value: number): string {
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+// Format confirmation message
+function formatConfirmationMessage(transactions: ExtractedTransaction[]): string {
+  if (transactions.length === 0) {
+    return "❌ Não consegui identificar nenhuma transação na sua mensagem.\n\nExemplos de como enviar:\n💸 _\"gastei 50 no uber\"_\n💰 _\"recebi 3000 de salário\"_\n🛒 _\"mercado 200, padaria 30, farmácia 45\"_";
+  }
+
+  if (transactions.length === 1) {
+    const t = transactions[0];
+    const emoji = t.type === "income" ? "💰" : "💸";
+    const typeLabel = t.type === "income" ? "Receita" : "Despesa";
+    return `✅ ${emoji} *${typeLabel} registrada!*\n\n📝 ${t.description}\n💵 ${formatCurrency(t.amount)}`;
+  }
+
+  // Multiple transactions
+  const incomeItems = transactions.filter((t) => t.type === "income");
+  const expenseItems = transactions.filter((t) => t.type === "expense");
+
+  const totalIncome = incomeItems.reduce((sum, t) => sum + t.amount, 0);
+  const totalExpenses = expenseItems.reduce((sum, t) => sum + t.amount, 0);
+
+  let message = `✅ *${transactions.length} transações registradas!*\n`;
+
+  if (expenseItems.length > 0) {
+    message += `\n💸 *Despesas:*\n`;
+    for (const t of expenseItems) {
+      message += `  • ${t.description}: ${formatCurrency(t.amount)}\n`;
+    }
+    message += `  *Subtotal:* ${formatCurrency(totalExpenses)}\n`;
+  }
+
+  if (incomeItems.length > 0) {
+    message += `\n💰 *Receitas:*\n`;
+    for (const t of incomeItems) {
+      message += `  • ${t.description}: ${formatCurrency(t.amount)}\n`;
+    }
+    message += `  *Subtotal:* ${formatCurrency(totalIncome)}\n`;
+  }
+
+  return message;
+}
+
+// Create transactions in the database
+async function createTransactions(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+  transactions: ExtractedTransaction[]
+): Promise<{ success: boolean; created: number; error?: string }> {
+  const today = new Date().toISOString().split("T")[0];
+
+  const records = transactions.map((t) => ({
+    user_id: userId,
+    description: t.description,
+    amount: t.amount,
+    type: t.type,
+    category: t.category,
+    due_date: today,
+    status: "completed",
+    source: "whatsapp",
+  }));
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert(records)
+    .select();
+
+  if (error) {
+    console.error("Error creating transactions:", error);
+    return { success: false, created: 0, error: error.message };
+  }
+
+  return { success: true, created: data?.length || 0 };
 }
 
 Deno.serve(async (req: Request) => {
@@ -129,7 +402,6 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log("Message type: " + messageType + ", from " + senderId);
-
     console.log("Message from " + senderId + ": " + (messageText || `[${messageType}]`));
 
     // Check if this is a verification code (6 alphanumeric characters) - only for text messages
@@ -149,8 +421,8 @@ Deno.serve(async (req: Request) => {
           "Agora você pode enviar suas transações por aqui. Exemplos:\n\n" +
           "💸 _\"gastei 50 no uber\"_\n" +
           "💰 _\"recebi 3000 de salário\"_\n" +
-          "🎤 _Envie um áudio descrevendo a transação_\n" +
-          "📸 _Envie foto de cupom fiscal_\n\n" +
+          "🛒 _\"mercado 200, padaria 30, farmácia 45\"_\n" +
+          "🎤 _Envie um áudio descrevendo a transação_\n\n" +
           "As transações serão lançadas automaticamente no app Meu Bolso."
         );
       } else {
@@ -186,22 +458,24 @@ Deno.serve(async (req: Request) => {
 
     const userId = link.user_id;
 
-    // Check current usage limit (without incrementing - trigger will handle that when transaction is created)
+    // Check and increment usage limit - ONCE per message (not per transaction)
+    // This implements requirement 2.2: "Mensagem Consome Apenas 1 Uso"
     const { data: limitData } = await supabase
-      .rpc('reset_whatsapp_messages_if_needed', { p_user_id: userId });
+      .rpc('increment_whatsapp_message', { p_user_id: userId });
 
     const limitResult = limitData?.[0];
+    const canProceed = limitResult?.success ?? false;
     const messagesUsed = limitResult?.messages_used || 0;
     const messagesLimit = limitResult?.messages_limit || 30;
 
-    // Check if user is at limit BEFORE processing
-    if (messagesUsed >= messagesLimit) {
+    // Check if user is at limit
+    if (!canProceed) {
       console.log("User " + userId + " at WhatsApp limit: " + messagesUsed + "/" + messagesLimit);
       const upgradeUrl = Deno.env.get("APP_URL") || "https://fin.prizely.com.br";
       await sendWhatsAppMessage(
         senderId,
-        "⚠️ *Limite de transações atingido*\n\n" +
-        "Você criou " + messagesUsed + " de " + messagesLimit + " transações via WhatsApp este mês.\n\n" +
+        "⚠️ *Limite de mensagens atingido*\n\n" +
+        "Você usou " + messagesUsed + " de " + messagesLimit + " mensagens via WhatsApp este mês.\n\n" +
         "Para continuar usando o WhatsApp ilimitado, faça upgrade para o plano Pro:\n" +
         "👉 " + upgradeUrl + "/pricing\n\n" +
         "Seu limite será renovado no primeiro dia do próximo mês."
@@ -214,30 +488,81 @@ Deno.serve(async (req: Request) => {
 
     console.log("User " + userId + " usage: " + messagesUsed + "/" + messagesLimit);
 
-    // TODO: Process transaction with AI based on message type
-    // When create_whatsapp_transaction is called, the trigger will automatically
-    // increment the usage counter because source='whatsapp'
-    console.log("Verified user sent " + messageType + ": " + (messageText || "[media]"));
+    // Process text messages
+    if (messageType === "text" && messageText) {
+      // Extract transactions using AI (supports multiple items per message - requirement 2.1)
+      const transactions = await extractTransactionsWithAI(messageText);
 
-    // For now, acknowledge receipt based on message type
-    let ackMessage = "";
-    if (messageType === "text") {
-      ackMessage = "📝 Mensagem recebida! (Processamento de transações em breve)";
-    } else if (messageType === "audio") {
-      ackMessage = "🎤 Áudio recebido! (Processamento de transações em breve)";
-    } else if (messageType === "image") {
-      ackMessage = "📸 Imagem recebida! (Processamento de transações em breve)";
+      console.log("Extracted transactions:", JSON.stringify(transactions));
+
+      if (transactions.length === 0) {
+        // No transactions found - send help message
+        await sendWhatsAppMessage(
+          senderId,
+          formatConfirmationMessage([])
+        );
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "No transactions extracted",
+            userId,
+            messagesUsed,
+            messagesLimit,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Create all transactions in the database
+      const result = await createTransactions(supabase, userId, transactions);
+
+      if (!result.success) {
+        await sendWhatsAppMessage(
+          senderId,
+          "❌ Erro ao salvar transações. Por favor, tente novamente."
+        );
+        return new Response(
+          JSON.stringify({ success: false, error: result.error }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Send formatted confirmation (requirement 2.4)
+      await sendWhatsAppMessage(senderId, formatConfirmationMessage(transactions));
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: "Transactions created",
+          transactionsCreated: result.created,
+          transactions,
+          userId,
+          messagesUsed,
+          messagesLimit,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    await sendWhatsAppMessage(senderId, ackMessage);
+    // Audio and image messages - not yet implemented
+    if (messageType === "audio") {
+      await sendWhatsAppMessage(
+        senderId,
+        "🎤 *Áudio recebido!*\n\nNo momento, apenas mensagens de texto são processadas.\n\nPor favor, envie sua transação por texto:\n💸 _\"gastei 50 no uber\"_"
+      );
+    } else if (messageType === "image") {
+      await sendWhatsAppMessage(
+        senderId,
+        "📸 *Imagem recebida!*\n\nNo momento, apenas mensagens de texto são processadas.\n\nPor favor, envie sua transação por texto:\n💸 _\"gastei 50 no uber\"_"
+      );
+    }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Message received",
-        userId: userId,
-        messageType: messageType,
-        text: messageText || null,
+        messageType,
+        userId,
         messagesUsed,
         messagesLimit,
       }),

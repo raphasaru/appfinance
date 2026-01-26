@@ -235,7 +235,7 @@ Melhorar a gestão de transações futuras (planejadas) vs. realizadas. Possíve
 
 ## 2. Integração WhatsApp
 
-### 2.1 Múltiplos Itens por Mensagem de Texto e Áudio
+### 2.1 Múltiplos Itens por Mensagem de Texto e Áudio ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -244,25 +244,24 @@ Permitir que mensagens de texto e áudio lancem mais de um item por mensagem, co
 
 **Implementação:**
 
-1. **Ajustar prompt do Gemini:**
-- Retornar array de transações ao invés de objeto único
-- Manter compatibilidade com mensagens de item único
+1. ✅ **Integração com Gemini AI:**
+- Prompt otimizado para extrair múltiplas transações
+- Retorna array de transações
+- Fallback com regex para quando API não disponível
 
-2. **Ajustar processamento:**
-- Iterar sobre array de transações retornadas
-- Criar todas as transações no banco
-- Retornar confirmação consolidada
+2. ✅ **Processamento:**
+- Itera sobre array de transações retornadas
+- Cria todas as transações no banco com `source: 'whatsapp'`
+- Categorização automática baseada em palavras-chave
 
 **Arquivos afetados:**
-- `whatsapp-service/src/prompts/extract.ts`
-- `whatsapp-service/src/webhooks/waha.ts`
-- `supabase/functions/whatsapp-webhook/index.ts`
+- ✅ `supabase/functions/whatsapp-webhook/index.ts`
 
 **Dependências:** Nenhuma
 
 ---
 
-### 2.2 Mensagem Consome Apenas 1 Uso
+### 2.2 Mensagem Consome Apenas 1 Uso ✅ CONCLUÍDO
 
 **Complexidade:** Baixa
 
@@ -271,17 +270,16 @@ Cada lançamento feito por mensagem no WhatsApp deve consumir apenas 1 uso de me
 
 **Implementação:**
 
-1. **Ajustar lógica de incremento:**
-- Chamar `increment_whatsapp_message` apenas uma vez por mensagem recebida
-- Não incrementar por item criado
+1. ✅ **Lógica de incremento:**
+- `increment_whatsapp_message` chamado UMA vez por mensagem recebida
+- Não incrementa por item/transação criada
 
-2. **Verificar RPC:**
-- Garantir que `increment_whatsapp_message` é chamado antes do processamento
-- Se limite atingido, não processar e retornar erro
+2. ✅ **Verificação de RPC:**
+- `increment_whatsapp_message` chamado ANTES do processamento
+- Se limite atingido, não processa e retorna mensagem de erro
 
 **Arquivos afetados:**
-- `whatsapp-service/src/webhooks/waha.ts`
-- `supabase/functions/whatsapp-webhook/index.ts`
+- ✅ `supabase/functions/whatsapp-webhook/index.ts`
 
 **Dependências:** 2.1 (Múltiplos Itens)
 
@@ -318,7 +316,7 @@ Você ainda pode usar o app normalmente pelo navegador!`;
 
 ---
 
-### 2.4 Mostrar Itens no Relatório de Confirmação
+### 2.4 Mostrar Itens no Relatório de Confirmação ✅ CONCLUÍDO
 
 **Complexidade:** Baixa
 
@@ -327,25 +325,28 @@ Mostrar itens repetidos também no relatório do WhatsApp, refletindo o que de f
 
 **Implementação:**
 
-1. **Ajustar formatação da resposta:**
+1. ✅ **Formatação da resposta:**
+- Item único: mostra emoji, descrição e valor
+- Múltiplos itens: lista separada por tipo (Despesas/Receitas)
+- Subtotais por tipo
+- Formatação de moeda em pt-BR
+
 ```typescript
 // Exemplo de resposta com múltiplos itens
-const formatConfirmation = (items: Transaction[]) => {
-  if (items.length === 1) {
-    return `✅ Lançado: ${items[0].description} - R$ ${items[0].amount}`;
-  }
-  
-  const total = items.reduce((sum, i) => sum + i.amount, 0);
-  const list = items.map(i => `  • ${i.description}: R$ ${i.amount}`).join('\n');
-  
-  return `✅ ${items.length} itens lançados:\n${list}\n\nTotal: R$ ${total}`;
-};
+✅ *3 transações registradas!*
+
+💸 *Despesas:*
+  • Mercado: R$ 200,00
+  • Padaria: R$ 30,00
+  *Subtotal:* R$ 230,00
+
+💰 *Receitas:*
+  • Freelance: R$ 500,00
+  *Subtotal:* R$ 500,00
 ```
 
 **Arquivos afetados:**
-- `whatsapp-service/src/utils/format.ts`
-- `whatsapp-service/src/webhooks/waha.ts`
-- `supabase/functions/whatsapp-webhook/index.ts`
+- ✅ `supabase/functions/whatsapp-webhook/index.ts`
 
 **Dependências:** 2.1 (Múltiplos Itens)
 
@@ -657,10 +658,10 @@ ALTER TABLE transactions ADD COLUMN custom_category_id UUID REFERENCES custom_ca
 5. ✅ 3.3 - Gráfico de pizza
 6. ✅ **BÔNUS:** Filtro de status (Todas/Pendentes/Concluídas) na Dashboard mobile
 
-### Fase 2 - WhatsApp Completo
-6. 2.1 - Múltiplos itens por mensagem
-7. 2.2 - Mensagem consome 1 uso
-8. 2.4 - Mostrar itens no relatório
+### Fase 2 - WhatsApp Completo ✅ CONCLUÍDA (26/01/2026)
+6. ✅ 2.1 - Múltiplos itens por mensagem (Gemini AI + fallback regex)
+7. ✅ 2.2 - Mensagem consome 1 uso
+8. ✅ 2.4 - Mostrar itens no relatório de confirmação
 
 ### Fase 3 - Transações Avançadas
 9. 1.5 - Transações com conta
