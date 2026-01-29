@@ -1,4 +1,4 @@
-import type { SubscriptionPlan } from '@/lib/database.types'
+export type SubscriptionPlan = 'free' | 'pro' | 'pro_annual'
 
 export interface Plan {
   id: SubscriptionPlan

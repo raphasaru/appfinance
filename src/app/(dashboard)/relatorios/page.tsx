@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { HeroBalanceCard } from "@/components/dashboard/hero-balance-card";
-import { MonthSelector } from "@/components/dashboard/month-selector";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { CategoryBudgetCard, CategoryBudget } from "@/components/reports/category-budget-card";
 import { CategoryPieChart } from "@/components/reports/category-pie-chart";
-import { useMonthlySummary } from "@/lib/hooks/use-summary";
+import {
+  PeriodSelector,
+  PeriodType,
+  DateRange,
+  getPeriodDateRange,
+  formatPeriodLabel,
+} from "@/components/reports/period-selector";
+import {
+  AccountCardFilter,
+  ActiveFilters,
+} from "@/components/reports/account-card-filter";
+import {
+  usePeriodSummary,
+  usePeriodCategorySpending,
+  PeriodFilters,
+} from "@/lib/hooks/use-summary";
 import { useMonthlyHistory } from "@/lib/hooks/use-history";
-import { useCategoryBudgets, useCategorySpending } from "@/lib/hooks/use-category-budgets";
-import { ExpenseCategory, categoryLabels } from "@/lib/utils/categories";
+import { useCategoryBudgets } from "@/lib/hooks/use-category-budgets";
+import { ExpenseCategory } from "@/lib/utils/categories";
 import { formatCurrency } from "@/lib/utils/currency";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   BarChart,
   Bar,
@@ -23,11 +39,10 @@ import {
   Tooltip,
 } from "recharts";
 
-// Chart colors - using hex values directly for Recharts compatibility
 const CHART_COLORS = {
-  income: "#22C55E",    // Green
-  expense: "#EF4444",   // Red
-  primary: "#6366F1",   // Indigo/Primary
+  income: "#22C55E",
+  expense: "#EF4444",
+  primary: "#6366F1",
 };
 
 const allCategories: ExpenseCategory[] = [
@@ -43,42 +58,78 @@ const allCategories: ExpenseCategory[] = [
 ];
 
 export default function RelatoriosPage() {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  // Period state
+  const [periodType, setPeriodType] = useState<PeriodType>("this_month");
+  const [dateRange, setDateRange] = useState<DateRange>(
+    getPeriodDateRange("this_month")
+  );
 
-  // Data hooks
-  const { data: summary } = useMonthlySummary(currentMonth);
+  // Filter state
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+  const [selectedCards, setSelectedCards] = useState<string[]>([]);
+
+  const filters: PeriodFilters | undefined = useMemo(() => {
+    if (selectedAccounts.length === 0 && selectedCards.length === 0) {
+      return undefined;
+    }
+    return {
+      bankAccountIds: selectedAccounts.length > 0 ? selectedAccounts : undefined,
+      creditCardIds: selectedCards.length > 0 ? selectedCards : undefined,
+    };
+  }, [selectedAccounts, selectedCards]);
+
+  // Data hooks with period and filters
+  const { data: summary, isLoading: summaryLoading } = usePeriodSummary(
+    dateRange.start,
+    dateRange.end,
+    filters
+  );
   const { data: history, isLoading: historyLoading } = useMonthlyHistory();
   const { data: categoryBudgets } = useCategoryBudgets();
-  const { data: categorySpending, isLoading: spendingLoading } = useCategorySpending(currentMonth);
+  const { data: categorySpending, isLoading: spendingLoading } =
+    usePeriodCategorySpending(dateRange.start, dateRange.end, filters);
 
-  // Prepare chart data from history
-  const chartData = history?.map((item) => ({
-    month: item.month,
-    REC: item.income,
-    DES: item.expenses,
-    SAL: item.balance,
-  })) || [];
+  const handlePeriodChange = (period: PeriodType, range: DateRange) => {
+    setPeriodType(period);
+    setDateRange(range);
+  };
+
+  const clearFilters = () => {
+    setSelectedAccounts([]);
+    setSelectedCards([]);
+  };
+
+  // Prepare chart data
+  const chartData =
+    history?.map((item) => ({
+      month: item.month,
+      REC: item.income,
+      DES: item.expenses,
+      SAL: item.balance,
+    })) || [];
 
   const balance = (summary?.totalIncome || 0) - (summary?.totalExpenses || 0);
 
-  // Build combined budget data
-  const budgetData: CategoryBudget[] = allCategories.map((category) => {
-    const budgetItem = categoryBudgets?.find((b) => b.category === category);
-    const spent = categorySpending?.[category] || 0;
-    const budget = budgetItem?.monthly_budget || 0;
+  // Build budget data
+  const budgetData: CategoryBudget[] = allCategories
+    .map((category) => {
+      const budgetItem = categoryBudgets?.find((b) => b.category === category);
+      const spent = categorySpending?.[category] || 0;
+      const budget = budgetItem?.monthly_budget || 0;
 
-    return {
-      category,
-      spent: Number(spent),
-      budget: Number(budget),
-    };
-  }).filter((b) => b.budget > 0 || b.spent > 0);
+      return {
+        category,
+        spent: Number(spent),
+        budget: Number(budget),
+      };
+    })
+    .filter((b) => b.budget > 0 || b.spent > 0);
 
   const totalSpent = budgetData.reduce((sum, b) => sum + b.spent, 0);
   const totalBudget = budgetData.reduce((sum, b) => sum + b.budget, 0);
   const budgetDifference = totalBudget - totalSpent;
 
-  // Prepare pie chart data
+  // Pie chart data
   const pieChartData = budgetData
     .filter((b) => b.spent > 0)
     .map((b) => ({
@@ -88,25 +139,78 @@ export default function RelatoriosPage() {
     }))
     .sort((a, b) => b.amount - a.amount);
 
+  // Period label for display
+  const periodLabel = formatPeriodLabel(periodType, dateRange);
+
   return (
     <div className="space-y-6">
       {/* Mobile Header */}
-      <div className="md:hidden px-4">
-        <MonthSelector currentMonth={currentMonth} onMonthChange={setCurrentMonth} />
+      <div className="md:hidden px-4 space-y-4">
+        <h1 className="text-xl font-bold">Relatórios</h1>
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <PeriodSelector
+                value={periodType}
+                dateRange={dateRange}
+                onChange={handlePeriodChange}
+              />
+            </div>
+            <AccountCardFilter
+              selectedAccounts={selectedAccounts}
+              selectedCards={selectedCards}
+              onAccountsChange={setSelectedAccounts}
+              onCardsChange={setSelectedCards}
+            />
+          </div>
+          <ActiveFilters
+            selectedAccounts={selectedAccounts}
+            selectedCards={selectedCards}
+            onRemoveAccount={(id) =>
+              setSelectedAccounts(selectedAccounts.filter((a) => a !== id))
+            }
+            onRemoveCard={(id) =>
+              setSelectedCards(selectedCards.filter((c) => c !== id))
+            }
+            onClearAll={clearFilters}
+          />
+        </div>
       </div>
 
       {/* Desktop Header */}
       <div className="hidden md:block">
-        <PageHeader
-          title="Relatórios"
-          currentMonth={currentMonth}
-          onMonthChange={setCurrentMonth}
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">Relatórios</h1>
+          <div className="flex items-center gap-3">
+            <PeriodSelector
+              value={periodType}
+              dateRange={dateRange}
+              onChange={handlePeriodChange}
+            />
+            <AccountCardFilter
+              selectedAccounts={selectedAccounts}
+              selectedCards={selectedCards}
+              onAccountsChange={setSelectedAccounts}
+              onCardsChange={setSelectedCards}
+            />
+          </div>
+        </div>
+        <ActiveFilters
+          selectedAccounts={selectedAccounts}
+          selectedCards={selectedCards}
+          onRemoveAccount={(id) =>
+            setSelectedAccounts(selectedAccounts.filter((a) => a !== id))
+          }
+          onRemoveCard={(id) =>
+            setSelectedCards(selectedCards.filter((c) => c !== id))
+          }
+          onClearAll={clearFilters}
         />
       </div>
 
       {/* Mobile Layout */}
       <div className="px-4 space-y-5 md:hidden">
-        {/* Hero Card - Balanço do Período */}
+        {/* Hero Card */}
         <HeroBalanceCard
           title="Balanço do Período"
           value={balance}
@@ -130,7 +234,9 @@ export default function RelatoriosPage() {
           <div className="bg-card rounded-xl border border-border p-4">
             {historyLoading ? (
               <div className="h-64 flex items-center justify-center">
-                <div className="animate-pulse text-muted-foreground">Carregando...</div>
+                <div className="animate-pulse text-muted-foreground">
+                  Carregando...
+                </div>
               </div>
             ) : chartData.length > 0 ? (
               <div className="h-64">
@@ -146,9 +252,7 @@ export default function RelatoriosPage() {
                       tick={{ fontSize: 11 }}
                       tickLine={false}
                       axisLine={false}
-                      tickFormatter={(value) =>
-                        `${(value / 1000).toFixed(0)}k`
-                      }
+                      tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
                       width={40}
                     />
                     <Tooltip
@@ -192,25 +296,23 @@ export default function RelatoriosPage() {
           </div>
         </div>
 
-        {/* Pie Chart - Category Distribution */}
+        {/* Pie Chart */}
         <CategoryPieChart data={pieChartData} isLoading={spendingLoading} />
 
         {/* Category Spending */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-semibold">Orçamento por Categoria</h2>
-            <span className="text-sm text-muted-foreground">
-              {currentMonth.toLocaleDateString("pt-BR", {
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
+            <span className="text-sm text-muted-foreground">{periodLabel}</span>
           </div>
 
           {spendingLoading ? (
             <div className="space-y-2">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
+                <div
+                  key={i}
+                  className="h-16 bg-muted animate-pulse rounded-xl"
+                />
               ))}
             </div>
           ) : budgetData.length > 0 ? (
@@ -221,7 +323,9 @@ export default function RelatoriosPage() {
             </div>
           ) : (
             <div className="text-center py-8 bg-card rounded-xl border border-dashed border-border">
-              <p className="text-sm text-muted-foreground">Sem gastos neste período</p>
+              <p className="text-sm text-muted-foreground">
+                Sem gastos neste período
+              </p>
             </div>
           )}
 
@@ -229,7 +333,9 @@ export default function RelatoriosPage() {
           {budgetData.length > 0 && (
             <div className="bg-card rounded-xl border border-border p-4 space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Total gasto</span>
+                <span className="text-sm text-muted-foreground">
+                  Total gasto
+                </span>
                 <span className="font-semibold text-expense currency">
                   {formatCurrency(totalSpent)}
                 </span>
@@ -287,12 +393,16 @@ export default function RelatoriosPage() {
               {/* Monthly Evolution Chart Card */}
               <Card>
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-semibold">Evolução Mensal</CardTitle>
+                  <CardTitle className="text-base font-semibold">
+                    Evolução Mensal
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {historyLoading ? (
                     <div className="h-72 flex items-center justify-center">
-                      <div className="animate-pulse text-muted-foreground">Carregando...</div>
+                      <div className="animate-pulse text-muted-foreground">
+                        Carregando...
+                      </div>
                     </div>
                   ) : chartData.length > 0 ? (
                     <div className="h-72">
@@ -323,7 +433,10 @@ export default function RelatoriosPage() {
                             }}
                           />
                           <Legend
-                            wrapperStyle={{ fontSize: "12px", paddingTop: "16px" }}
+                            wrapperStyle={{
+                              fontSize: "12px",
+                              paddingTop: "16px",
+                            }}
                           />
                           <Bar
                             dataKey="REC"
@@ -354,7 +467,7 @@ export default function RelatoriosPage() {
                 </CardContent>
               </Card>
 
-              {/* Pie Chart - Category Distribution */}
+              {/* Pie Chart */}
               <CategoryPieChart data={pieChartData} isLoading={spendingLoading} />
             </div>
 
@@ -363,12 +476,11 @@ export default function RelatoriosPage() {
               <Card>
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-base font-semibold">Orçamento por Categoria</CardTitle>
+                    <CardTitle className="text-base font-semibold">
+                      Orçamento por Categoria
+                    </CardTitle>
                     <span className="text-xs text-muted-foreground">
-                      {currentMonth.toLocaleDateString("pt-BR", {
-                        month: "short",
-                        year: "numeric",
-                      })}
+                      {periodLabel}
                     </span>
                   </div>
                 </CardHeader>
@@ -376,27 +488,37 @@ export default function RelatoriosPage() {
                   {spendingLoading ? (
                     <div className="space-y-2">
                       {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-16 bg-muted animate-pulse rounded-xl" />
+                        <div
+                          key={i}
+                          className="h-16 bg-muted animate-pulse rounded-xl"
+                        />
                       ))}
                     </div>
                   ) : budgetData.length > 0 ? (
                     <>
                       <div className="space-y-2">
                         {budgetData.map((budget) => (
-                          <CategoryBudgetCard key={budget.category} data={budget} />
+                          <CategoryBudgetCard
+                            key={budget.category}
+                            data={budget}
+                          />
                         ))}
                       </div>
 
                       {/* Summary */}
                       <div className="mt-4 pt-4 border-t border-border space-y-3">
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Total gasto</span>
+                          <span className="text-sm text-muted-foreground">
+                            Total gasto
+                          </span>
                           <span className="font-semibold text-expense currency">
                             {formatCurrency(totalSpent)}
                           </span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Total orçado</span>
+                          <span className="text-sm text-muted-foreground">
+                            Total orçado
+                          </span>
                           <span className="font-semibold currency">
                             {formatCurrency(totalBudget)}
                           </span>
@@ -407,7 +529,9 @@ export default function RelatoriosPage() {
                             <span
                               className={cn(
                                 "font-bold currency",
-                                budgetDifference >= 0 ? "text-income" : "text-expense"
+                                budgetDifference >= 0
+                                  ? "text-income"
+                                  : "text-expense"
                               )}
                             >
                               {formatCurrency(budgetDifference)}

@@ -14,7 +14,7 @@ import { UsageMeter } from "./usage-meter"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import Link from "next/link"
-import type { SubscriptionPlan } from "@/lib/database.types"
+import type { SubscriptionPlan } from "@/lib/stripe/plans"
 
 export function BillingSettings() {
   const { data: subscription, isLoading } = useSubscription()

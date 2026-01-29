@@ -5,7 +5,7 @@ import { Crown, User } from "lucide-react"
 import { useSubscription } from "@/lib/hooks/use-subscription"
 import { isPremiumPlan } from "@/lib/stripe/plans"
 import { cn } from "@/lib/utils"
-import type { SubscriptionPlan } from "@/lib/database.types"
+import type { SubscriptionPlan } from "@/lib/stripe/plans"
 
 interface PlanBadgeProps {
   plan?: SubscriptionPlan | null

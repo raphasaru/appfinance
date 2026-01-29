@@ -2,8 +2,10 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { Subscription, SubscriptionPlan } from "@/lib/database.types";
-import { FREE_WHATSAPP_LIMIT, isPremiumPlan } from "@/lib/stripe/plans";
+import { Tables } from "@/lib/database.types";
+import { FREE_WHATSAPP_LIMIT, isPremiumPlan, type SubscriptionPlan } from "@/lib/stripe/plans";
+
+type Subscription = Tables<"subscriptions"> & { plan: SubscriptionPlan };
 
 export function useSubscription() {
   const supabase = createClient();

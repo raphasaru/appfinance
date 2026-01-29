@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getStripe } from '@/lib/stripe/client'
-import { PLANS, type Plan } from '@/lib/stripe/plans'
-import type { SubscriptionPlan } from '@/lib/database.types'
+import { PLANS, type Plan, type SubscriptionPlan } from '@/lib/stripe/plans'
 
 export async function POST(request: NextRequest) {
   try {

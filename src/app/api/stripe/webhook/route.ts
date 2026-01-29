@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
 import { getStripe } from '@/lib/stripe/client'
 import { createClient } from '@supabase/supabase-js'
-import type { Database, SubscriptionPlan } from '@/lib/database.types'
+import type { Database } from '@/lib/database.types'
 import type Stripe from 'stripe'
+
+type SubscriptionPlan = 'pro' | 'pro_annual'
 
 // Use service role client for webhook (no user auth)
 const supabase = createClient<Database>(

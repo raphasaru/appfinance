@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
-import type { Database, SubscriptionPlan } from '@/lib/database.types'
-import { FREE_WHATSAPP_LIMIT, isPremiumPlan } from '@/lib/stripe/plans'
+import type { Database } from '@/lib/database.types'
+import { FREE_WHATSAPP_LIMIT, isPremiumPlan, type SubscriptionPlan } from '@/lib/stripe/plans'
 
 interface WhatsAppLimitResult {
   canSend: boolean

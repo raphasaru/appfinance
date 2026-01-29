@@ -31,6 +31,7 @@ const formSchema = z.object({
   credit_limit: z.string().min(1, "Limite obrigatório"),
   current_bill: z.string(),
   due_day: z.string().min(1, "Dia de vencimento obrigatório"),
+  closing_day: z.string().min(1, "Dia de fechamento obrigatório"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -60,6 +61,7 @@ export function CreditCardForm({
       credit_limit: "",
       current_bill: "",
       due_day: "",
+      closing_day: "",
     },
   });
 
@@ -71,6 +73,7 @@ export function CreditCardForm({
           credit_limit: formatCurrencyInput(String(Number(card.credit_limit) * 100)),
           current_bill: formatCurrencyInput(String(Number(card.current_bill) * 100)),
           due_day: String(card.due_day),
+          closing_day: String(card.closing_day),
         });
       } else {
         form.reset({
@@ -78,6 +81,7 @@ export function CreditCardForm({
           credit_limit: "",
           current_bill: "",
           due_day: "",
+          closing_day: "",
         });
       }
     }
@@ -92,6 +96,7 @@ export function CreditCardForm({
     const creditLimit = parseCurrency(data.credit_limit);
     const currentBill = parseCurrency(data.current_bill) || 0;
     const dueDay = parseInt(data.due_day, 10);
+    const closingDay = parseInt(data.closing_day, 10);
 
     if (creditLimit <= 0) {
       toast.error("Limite deve ser maior que zero");
@@ -103,11 +108,17 @@ export function CreditCardForm({
       return;
     }
 
+    if (closingDay < 1 || closingDay > 31) {
+      toast.error("Dia de fechamento deve ser entre 1 e 31");
+      return;
+    }
+
     const payload = {
       name: data.name,
       credit_limit: creditLimit,
       current_bill: currentBill,
       due_day: dueDay,
+      closing_day: closingDay,
     };
 
     try {
@@ -174,21 +185,40 @@ export function CreditCardForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="due_day">Dia de Vencimento</Label>
-        <Input
-          id="due_day"
-          type="number"
-          min="1"
-          max="31"
-          placeholder="Ex: 15"
-          {...form.register("due_day")}
-        />
-        {form.formState.errors.due_day && (
-          <p className="text-sm text-destructive">
-            {form.formState.errors.due_day.message}
-          </p>
-        )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="closing_day">Dia de Fechamento</Label>
+          <Input
+            id="closing_day"
+            type="number"
+            min="1"
+            max="31"
+            placeholder="Ex: 5"
+            {...form.register("closing_day")}
+          />
+          {form.formState.errors.closing_day && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.closing_day.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="due_day">Dia de Vencimento</Label>
+          <Input
+            id="due_day"
+            type="number"
+            min="1"
+            max="31"
+            placeholder="Ex: 15"
+            {...form.register("due_day")}
+          />
+          {form.formState.errors.due_day && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.due_day.message}
+            </p>
+          )}
+        </div>
       </div>
 
       <Button type="submit" className="w-full h-12" disabled={isPending}>

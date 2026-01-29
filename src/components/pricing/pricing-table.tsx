@@ -7,7 +7,7 @@ import { PricingCard } from "./pricing-card"
 import { PLANS } from "@/lib/stripe/plans"
 import { useCreateCheckout, useSubscription } from "@/lib/hooks/use-subscription"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import type { SubscriptionPlan } from "@/lib/database.types"
+import type { SubscriptionPlan } from "@/lib/stripe/plans"
 
 interface PricingTableProps {
   showFreePlan?: boolean

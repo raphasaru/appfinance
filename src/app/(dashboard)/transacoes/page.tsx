@@ -5,11 +5,12 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { TransactionCard } from "@/components/transactions/transaction-card";
 import { TransactionForm } from "@/components/transactions/transaction-form";
-import { useTransactions } from "@/lib/hooks/use-transactions";
+import { useTransactions, useBatchCompleteTransactions } from "@/lib/hooks/use-transactions";
 import { useMonthlySummary } from "@/lib/hooks/use-summary";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,13 +18,16 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Plus, Filter, TrendingUp, TrendingDown, Receipt, ArrowUpDown, ArrowDown, ArrowUp } from "lucide-react";
+import { Plus, Filter, TrendingUp, TrendingDown, Receipt, ArrowUpDown, CheckSquare, X, Check, Loader2, Clock } from "lucide-react";
 import { Tables } from "@/lib/database.types";
 import { formatCurrency } from "@/lib/utils/currency";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type Transaction = Tables<"transactions">;
 
+type TypeFilter = "all" | "income" | "expense";
+type StatusFilter = "all" | "planned" | "completed";
 type SortField = "date" | "description" | "amount";
 type SortOrder = "asc" | "desc";
 
@@ -38,21 +42,39 @@ const sortLabels: Record<`${SortField}_${SortOrder}`, string> = {
 
 export default function TransacoesPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [formOpen, setFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
+  // Selection state
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   const { data: transactions, isLoading } = useTransactions(currentMonth);
   const { data: summary } = useMonthlySummary(currentMonth);
+  const batchCompleteMutation = useBatchCompleteTransactions();
 
   const sortKey = `${sortField}_${sortOrder}` as `${SortField}_${SortOrder}`;
 
+  // Calculate counts
+  const pendingCount = useMemo(() => {
+    return transactions?.filter(t => t.status === "planned").length || 0;
+  }, [transactions]);
+
+  const completedCount = useMemo(() => {
+    return transactions?.filter(t => t.status === "completed").length || 0;
+  }, [transactions]);
+
   const filteredAndSortedTransactions = useMemo(() => {
     let result = transactions?.filter((t) => {
-      if (filter === "all") return true;
-      return t.type === filter;
+      // Type filter
+      if (typeFilter !== "all" && t.type !== typeFilter) return false;
+      // Status filter
+      if (statusFilter !== "all" && t.status !== statusFilter) return false;
+      return true;
     }) || [];
 
     // Sort transactions
@@ -75,7 +97,7 @@ export default function TransacoesPage() {
     });
 
     return result;
-  }, [transactions, filter, sortField, sortOrder]);
+  }, [transactions, typeFilter, statusFilter, sortField, sortOrder]);
 
   const filteredTransactions = filteredAndSortedTransactions;
 
@@ -83,6 +105,7 @@ export default function TransacoesPage() {
   const expenseTransactions = transactions?.filter((t) => t.type === "expense") || [];
 
   const handleEdit = (transaction: Transaction) => {
+    if (selectionMode) return;
     setEditingTransaction(transaction);
     setFormOpen(true);
   };
@@ -99,6 +122,91 @@ export default function TransacoesPage() {
     setFormOpen(true);
   };
 
+  // Selection handlers
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedIds(new Set());
+  };
+
+  const handleSelectionChange = (id: string, selected: boolean) => {
+    const newSelected = new Set(selectedIds);
+    if (selected) {
+      newSelected.add(id);
+    } else {
+      newSelected.delete(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const selectAll = () => {
+    const pendingIds = filteredTransactions
+      .filter(t => t.status === "planned")
+      .map(t => t.id);
+    setSelectedIds(new Set(pendingIds));
+  };
+
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBatchComplete = async () => {
+    if (selectedIds.size === 0) return;
+    try {
+      await batchCompleteMutation.mutateAsync(Array.from(selectedIds));
+      toast.success(`${selectedIds.size} transações marcadas como pagas`);
+      setSelectedIds(new Set());
+      setSelectionMode(false);
+    } catch {
+      toast.error("Erro ao atualizar transações");
+    }
+  };
+
+  // Status filter tabs component
+  const StatusFilterTabs = ({ className }: { className?: string }) => (
+    <div className={cn("flex gap-1 bg-muted p-1 rounded-lg", className)}>
+      <button
+        onClick={() => setStatusFilter("all")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+          statusFilter === "all"
+            ? "bg-background shadow-sm"
+            : "hover:bg-background/50"
+        )}
+      >
+        Todas
+        <span className="text-xs text-muted-foreground">({transactions?.length || 0})</span>
+      </button>
+      <button
+        onClick={() => setStatusFilter("planned")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+          statusFilter === "planned"
+            ? "bg-background shadow-sm"
+            : "hover:bg-background/50"
+        )}
+      >
+        Pendentes
+        {pendingCount > 0 && (
+          <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+            {pendingCount}
+          </Badge>
+        )}
+      </button>
+      <button
+        onClick={() => setStatusFilter("completed")}
+        className={cn(
+          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+          statusFilter === "completed"
+            ? "bg-background shadow-sm"
+            : "hover:bg-background/50"
+        )}
+      >
+        Concluídas
+        <span className="text-xs text-muted-foreground">({completedCount})</span>
+      </button>
+    </div>
+  );
+
   return (
     <div className="space-y-6">
       {/* Mobile Header */}
@@ -113,17 +221,28 @@ export default function TransacoesPage() {
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
           action={
-            <Button onClick={handleAdd}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Transação
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={toggleSelectionMode}>
+                <CheckSquare className="h-4 w-4 mr-2" />
+                {selectionMode ? "Cancelar" : "Selecionar"}
+              </Button>
+              <Button onClick={handleAdd}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transação
+              </Button>
+            </div>
           }
         />
       </div>
 
+      {/* Status Filter Tabs - Mobile */}
+      <div className="px-4 md:hidden">
+        <StatusFilterTabs />
+      </div>
+
       {/* Mobile Tabs + Sort */}
       <div className="px-4 md:hidden space-y-3">
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as typeof filter)}>
+        <Tabs value={typeFilter} onValueChange={(v) => setTypeFilter(v as typeof typeFilter)}>
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="all">Todas</TabsTrigger>
             <TabsTrigger value="income">Receitas</TabsTrigger>
@@ -131,9 +250,20 @@ export default function TransacoesPage() {
           </TabsList>
         </Tabs>
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {filteredTransactions.length} {filteredTransactions.length === 1 ? "item" : "itens"}
-          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSelectionMode}
+              className="h-8"
+            >
+              <CheckSquare className="h-3.5 w-3.5 mr-1" />
+              {selectionMode ? "Cancelar" : "Selecionar"}
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {filteredTransactions.length} {filteredTransactions.length === 1 ? "item" : "itens"}
+            </span>
+          </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 gap-1.5">
@@ -162,6 +292,45 @@ export default function TransacoesPage() {
         </div>
       </div>
 
+      {/* Selection Bar - when items are selected */}
+      {selectionMode && selectedIds.size > 0 && (
+        <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-auto bg-primary text-primary-foreground rounded-lg shadow-lg p-3 flex items-center justify-between gap-4 z-50 md:px-6">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">{selectedIds.size} selecionada(s)</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={selectAll}
+              className="text-primary-foreground hover:bg-primary-foreground/20 h-7 text-xs"
+            >
+              Selecionar pendentes
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearSelection}
+              className="text-primary-foreground hover:bg-primary-foreground/20 h-7 text-xs"
+            >
+              Limpar
+            </Button>
+          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleBatchComplete}
+            disabled={batchCompleteMutation.isPending}
+            className="gap-1.5"
+          >
+            {batchCompleteMutation.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Check className="h-4 w-4" />
+            )}
+            Marcar como pago
+          </Button>
+        </div>
+      )}
+
       {/* Desktop Layout */}
       <div className="hidden md:grid md:grid-cols-[280px_1fr] gap-6">
         {/* Filters Sidebar */}
@@ -170,15 +339,15 @@ export default function TransacoesPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                <CardTitle className="text-sm font-medium">Filtros</CardTitle>
+                <CardTitle className="text-sm font-medium">Tipo</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               <button
-                onClick={() => setFilter("all")}
+                onClick={() => setTypeFilter("all")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  filter === "all"
+                  typeFilter === "all"
                     ? "bg-primary text-primary-foreground"
                     : "hover:bg-muted"
                 )}
@@ -192,10 +361,10 @@ export default function TransacoesPage() {
                 </span>
               </button>
               <button
-                onClick={() => setFilter("income")}
+                onClick={() => setTypeFilter("income")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  filter === "income"
+                  typeFilter === "income"
                     ? "bg-income text-white"
                     : "hover:bg-muted"
                 )}
@@ -209,10 +378,10 @@ export default function TransacoesPage() {
                 </span>
               </button>
               <button
-                onClick={() => setFilter("expense")}
+                onClick={() => setTypeFilter("expense")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  filter === "expense"
+                  typeFilter === "expense"
                     ? "bg-expense text-white"
                     : "hover:bg-muted"
                 )}
@@ -224,6 +393,65 @@ export default function TransacoesPage() {
                 <span className="text-xs opacity-70">
                   {expenseTransactions.length}
                 </span>
+              </button>
+            </CardContent>
+          </Card>
+
+          {/* Status Filter */}
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-sm font-medium">Status</CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <button
+                onClick={() => setStatusFilter("all")}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  statusFilter === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted"
+                )}
+              >
+                <span>Todas</span>
+                <span className="text-xs opacity-70">{transactions?.length || 0}</span>
+              </button>
+              <button
+                onClick={() => setStatusFilter("planned")}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  statusFilter === "planned"
+                    ? "bg-amber-500 text-white"
+                    : "hover:bg-muted"
+                )}
+              >
+                <span>Pendentes</span>
+                {pendingCount > 0 ? (
+                  <Badge variant="secondary" className={cn(
+                    "h-5 px-1.5 text-xs",
+                    statusFilter === "planned"
+                      ? "bg-white/20 text-white"
+                      : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                  )}>
+                    {pendingCount}
+                  </Badge>
+                ) : (
+                  <span className="text-xs opacity-70">0</span>
+                )}
+              </button>
+              <button
+                onClick={() => setStatusFilter("completed")}
+                className={cn(
+                  "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  statusFilter === "completed"
+                    ? "bg-income text-white"
+                    : "hover:bg-muted"
+                )}
+              >
+                <span>Concluídas</span>
+                <span className="text-xs opacity-70">{completedCount}</span>
               </button>
             </CardContent>
           </Card>
@@ -266,9 +494,11 @@ export default function TransacoesPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">
-                {filter === "all" && "Todas as Transações"}
-                {filter === "income" && "Receitas"}
-                {filter === "expense" && "Despesas"}
+                {typeFilter === "all" && statusFilter === "all" && "Todas as Transações"}
+                {typeFilter === "all" && statusFilter === "planned" && "Transações Pendentes"}
+                {typeFilter === "all" && statusFilter === "completed" && "Transações Concluídas"}
+                {typeFilter === "income" && "Receitas"}
+                {typeFilter === "expense" && "Despesas"}
               </CardTitle>
               <div className="flex items-center gap-3">
                 <DropdownMenu>
@@ -316,6 +546,9 @@ export default function TransacoesPage() {
                     key={transaction.id}
                     transaction={transaction}
                     onEdit={handleEdit}
+                    selectable={selectionMode}
+                    selected={selectedIds.has(transaction.id)}
+                    onSelectionChange={handleSelectionChange}
                   />
                 ))}
               </div>
@@ -344,6 +577,9 @@ export default function TransacoesPage() {
               key={transaction.id}
               transaction={transaction}
               onEdit={handleEdit}
+              selectable={selectionMode}
+              selected={selectedIds.has(transaction.id)}
+              onSelectionChange={handleSelectionChange}
             />
           ))
         ) : (
@@ -354,13 +590,15 @@ export default function TransacoesPage() {
       </div>
 
       {/* Mobile FAB */}
-      <Button
-        size="lg"
-        className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg md:hidden z-40"
-        onClick={handleAdd}
-      >
-        <Plus className="h-6 w-6" />
-      </Button>
+      {!selectionMode && (
+        <Button
+          size="lg"
+          className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg md:hidden z-40"
+          onClick={handleAdd}
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
+      )}
 
       <TransactionForm
         open={formOpen}
