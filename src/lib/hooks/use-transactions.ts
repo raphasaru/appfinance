@@ -3,7 +3,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/database.types";
-import { startOfMonth, endOfMonth, format } from "date-fns";
+import { startOfMonth, endOfMonth, format, addMonths } from "date-fns";
+import { getInstallmentDueDates } from "@/lib/utils/credit-card";
 
 type Transaction = Tables<"transactions">;
 
@@ -128,6 +129,7 @@ export function useDeleteTransaction() {
 
   return useMutation({
     mutationFn: async (id: string) => {
+      // CASCADE: deleting parent will auto-delete children via FK constraint
       const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
@@ -135,5 +137,166 @@ export function useDeleteTransaction() {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["summary"] });
     },
+  });
+}
+
+export interface InstallmentTransactionInput {
+  description: string;
+  amount: number;
+  type: "expense";
+  category?: string;
+  payment_method: "credit";
+  credit_card_id: string;
+  total_installments: number;
+  purchase_date: Date;
+  closing_day: number;
+  due_day: number;
+  notes?: string;
+}
+
+export function useCreateInstallmentTransaction() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (input: InstallmentTransactionInput) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const dueDates = getInstallmentDueDates(
+        input.purchase_date,
+        { closing_day: input.closing_day, due_day: input.due_day },
+        input.total_installments
+      );
+
+      const installmentAmount = input.amount / input.total_installments;
+
+      // Create first transaction (parent)
+      const { data: parent, error: parentError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: user.id,
+          description: input.description,
+          amount: installmentAmount,
+          type: input.type,
+          category: input.category as any,
+          payment_method: "credit",
+          credit_card_id: input.credit_card_id,
+          installment_number: 1,
+          total_installments: input.total_installments,
+          due_date: format(dueDates[0], "yyyy-MM-dd"),
+          status: "planned",
+          notes: input.notes,
+        })
+        .select()
+        .single();
+
+      if (parentError) throw parentError;
+
+      // Create remaining installments as children
+      if (input.total_installments > 1) {
+        const children = dueDates.slice(1).map((dueDate, index) => ({
+          user_id: user.id,
+          description: input.description,
+          amount: installmentAmount,
+          type: input.type,
+          category: input.category as any,
+          payment_method: "credit" as const,
+          credit_card_id: input.credit_card_id,
+          installment_number: index + 2,
+          total_installments: input.total_installments,
+          parent_transaction_id: parent.id,
+          due_date: format(dueDate, "yyyy-MM-dd"),
+          status: "planned" as const,
+          notes: input.notes,
+        }));
+
+        const { error: childError } = await supabase
+          .from("transactions")
+          .insert(children);
+
+        if (childError) throw childError;
+      }
+
+      return parent;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["summary"] });
+    },
+  });
+}
+
+export function useBatchCompleteTransactions() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (ids.length === 0) return;
+
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          status: "completed",
+          completed_date: format(new Date(), "yyyy-MM-dd"),
+        })
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["summary"] });
+    },
+  });
+}
+
+export function useBatchUncompleteTransactions() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async (ids: string[]) => {
+      if (ids.length === 0) return;
+
+      const { error } = await supabase
+        .from("transactions")
+        .update({
+          status: "planned",
+          completed_date: null,
+        })
+        .in("id", ids);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["summary"] });
+    },
+  });
+}
+
+export function useTransactionWithItems(transactionId: string | null) {
+  const supabase = createClient();
+
+  return useQuery({
+    queryKey: ["transaction", transactionId],
+    queryFn: async () => {
+      if (!transactionId) return null;
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(`
+          *,
+          transaction_items (*)
+        `)
+        .eq("id", transactionId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!transactionId,
   });
 }
