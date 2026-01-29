@@ -354,7 +354,7 @@ Mostrar itens repetidos também no relatório do WhatsApp, refletindo o que de f
 
 ## 3. Relatórios
 
-### 3.1 Relatório de Períodos
+### 3.1 Relatório de Períodos ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -363,9 +363,9 @@ Criar relatório com filtros de período: hoje, ontem, últimos 3 dias, últimos
 
 **Implementação:**
 
-1. **Novo componente `PeriodSelector`:**
+1. ✅ **Novo componente `PeriodSelector`:**
 ```typescript
-type Period = 
+type PeriodType =
   | 'today'
   | 'yesterday'
   | 'last_3_days'
@@ -375,30 +375,32 @@ type Period =
   | 'custom';
 
 interface PeriodSelectorProps {
-  value: Period;
-  onChange: (period: Period, dateRange?: { start: Date; end: Date }) => void;
+  value: PeriodType;
+  dateRange: DateRange;
+  onChange: (period: PeriodType, dateRange: DateRange) => void;
 }
 ```
 
-2. **Novo hook `usePeriodSummary`:**
-- Aceitar `startDate` e `endDate` ao invés de apenas `month`
-- Calcular receitas, despesas e saldo do período
+2. ✅ **Novos hooks `usePeriodSummary` e `usePeriodCategorySpending`:**
+- Aceita `startDate` e `endDate`
+- Suporta filtros opcionais por `bankAccountIds` e `creditCardIds`
+- Calcula receitas, despesas e saldo do período
 
-3. **UI:**
-- Dropdown ou tabs para seleção rápida
-- DatePicker para período personalizado
+3. ✅ **UI:**
+- Select dropdown para seleção rápida de período
+- Inputs de data para período personalizado
 - Cards de resumo do período selecionado
 
 **Arquivos afetados:**
-- `src/app/(dashboard)/relatorios/page.tsx`
-- `src/lib/hooks/use-summary.ts` (ou novo hook)
-- Novo: `src/components/reports/period-selector.tsx`
+- ✅ `src/app/(dashboard)/relatorios/page.tsx`
+- ✅ `src/lib/hooks/use-summary.ts`
+- ✅ Novo: `src/components/reports/period-selector.tsx`
 
 **Dependências:** Nenhuma
 
 ---
 
-### 3.2 Filtro por Contas e Cartões
+### 3.2 Filtro por Contas e Cartões ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -407,25 +409,26 @@ Permitir filtrar relatórios por conta bancária ou cartão de crédito específ
 
 **Implementação:**
 
-1. **UI de filtros:**
-- Multi-select de contas
-- Multi-select de cartões
-- Botão "Limpar filtros"
+1. ✅ **Novo componente `AccountCardFilter`:**
+- Sheet lateral com checkboxes para contas e cartões
+- Seções colapsáveis para contas bancárias e cartões de crédito
+- Badges mostrando quantidade de filtros ativos
 
-2. **Ajustar queries:**
-- Adicionar `WHERE bank_account_id IN (...)` quando filtrado
-- Adicionar `WHERE credit_card_id IN (...)` quando filtrado
+2. ✅ **Novo componente `ActiveFilters`:**
+- Badges com filtros ativos e botão X para remover
+- Botão "Limpar" para remover todos os filtros
 
-3. **Totais por conta/cartão:**
-- Exibir breakdown de gastos por conta
-- Exibir breakdown de gastos por cartão
+3. ✅ **Ajustar queries:**
+- `usePeriodSummary` aceita `PeriodFilters` opcional
+- `usePeriodCategorySpending` aceita `PeriodFilters` opcional
+- Filtragem client-side para flexibilidade com lógica OR
 
 **Arquivos afetados:**
-- `src/app/(dashboard)/relatorios/page.tsx`
-- `src/lib/hooks/use-summary.ts`
-- `src/lib/hooks/use-transactions.ts`
+- ✅ `src/app/(dashboard)/relatorios/page.tsx`
+- ✅ `src/lib/hooks/use-summary.ts`
+- ✅ Novo: `src/components/reports/account-card-filter.tsx`
 
-**Dependências:** 1.5 (Transações com Conta)
+**Dependências:** Nenhuma (usa colunas existentes `bank_account_id` e `credit_card_id`)
 
 ---
 
@@ -533,7 +536,7 @@ Revisar todo o app para garantir que textos estão com acentuação correta em p
 
 ## 5. Onboarding
 
-### 5.1 Fluxo de Onboarding para Novos Usuários
+### 5.1 Fluxo de Onboarding para Novos Usuários ✅ CONCLUÍDO
 
 **Complexidade:** Alta
 
@@ -592,7 +595,7 @@ src/components/onboarding/
 
 ## 6. Recursos Premium
 
-### 6.1 Categorias Personalizadas para Usuários Pro
+### 6.1 Categorias Personalizadas para Usuários Pro ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -670,13 +673,13 @@ ALTER TABLE transactions ADD COLUMN custom_category_id UUID REFERENCES custom_ca
 12. 1.4 - Lançamentos no cartão
 13. 1.6 - Melhorar pendente/concluído
 
-### Fase 4 - Relatórios
-14. 3.1 - Relatório de períodos
-15. 3.2 - Filtro por contas e cartões
+### Fase 4 - Relatórios ✅ CONCLUÍDA (28/01/2026)
+14. ✅ 3.1 - Relatório de períodos
+15. ✅ 3.2 - Filtro por contas e cartões
 
-### Fase 5 - Premium e Onboarding
-16. 6.1 - Categorias personalizadas
-17. 5.1 - Fluxo de onboarding
+### Fase 5 - Premium e Onboarding ✅ CONCLUÍDA (29/01/2026)
+16. ✅ 6.1 - Categorias personalizadas
+17. ✅ 5.1 - Fluxo de onboarding
 
 ---
 

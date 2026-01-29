@@ -39,10 +39,12 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/cadastro") ||
     request.nextUrl.pathname.startsWith("/esqueci-senha") ||
     request.nextUrl.pathname.startsWith("/redefinir-senha");
+  const isOnboardingPage = request.nextUrl.pathname.startsWith("/onboarding");
   const isProtectedRoute =
     !isAuthPage &&
     !request.nextUrl.pathname.startsWith("/auth") &&
-    request.nextUrl.pathname !== "/";
+    request.nextUrl.pathname !== "/" &&
+    request.nextUrl.pathname !== "/pricing";
 
   // Redirect unauthenticated users to login
   if (!user && isProtectedRoute) {
@@ -56,6 +58,22 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);
+  }
+
+  // Check onboarding status for authenticated users on protected routes
+  if (user && isProtectedRoute && !isOnboardingPage) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed")
+      .eq("id", user.id)
+      .single();
+
+    // Redirect to onboarding if not completed
+    if (profile && profile.onboarding_completed === false) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/onboarding";
+      return NextResponse.redirect(url);
+    }
   }
 
   return supabaseResponse;

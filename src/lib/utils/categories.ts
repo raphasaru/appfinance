@@ -1,6 +1,7 @@
-import { Enums } from "@/lib/database.types";
+import { Enums, Tables } from "@/lib/database.types";
 
 export type ExpenseCategory = Enums<"expense_category">;
+export type CustomCategory = Tables<"custom_categories">;
 
 export const categoryLabels: Record<ExpenseCategory, string> = {
   fixed_housing: "Moradia",
@@ -29,4 +30,28 @@ export const categoryIcons: Record<ExpenseCategory, string> = {
 export function getCategoryLabel(category: ExpenseCategory | null): string {
   if (!category) return "Sem categoria";
   return categoryLabels[category] || category;
+}
+
+export function getCategoryLabelWithCustom(
+  category: ExpenseCategory | null,
+  customCategoryId: string | null,
+  customCategories: CustomCategory[]
+): string {
+  if (customCategoryId) {
+    const custom = customCategories.find(c => c.id === customCategoryId);
+    return custom?.name || "Categoria personalizada";
+  }
+  return getCategoryLabel(category);
+}
+
+export function getCategoryColor(
+  category: ExpenseCategory | null,
+  customCategoryId: string | null,
+  customCategories: CustomCategory[]
+): string | null {
+  if (customCategoryId) {
+    const custom = customCategories.find(c => c.id === customCategoryId);
+    return custom?.color || null;
+  }
+  return null;
 }
