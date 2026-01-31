@@ -1,0 +1,64 @@
+# Roadmap: UX Transacoes v2
+
+## Overview
+
+Migrar de duas colunas para lista unica com toggle inline de status e filtro por tabs. Tres fases: componentes base, comportamento toggle com optimistic updates, e filtros com tabs.
+
+## Phases
+
+- [ ] **Phase 1: Componentes & Layout** - Extrair componentes reutilizaveis, lista unica, touch targets 44px
+- [ ] **Phase 2: Toggle & Form** - Toggle inline com optimistic updates, toggle no formulario
+- [ ] **Phase 3: Filter Tabs** - Tabs Todos/Pendentes/Pagos com contadores
+
+## Phase Details
+
+### Phase 1: Componentes & Layout
+**Goal**: Componentes reutilizaveis com touch-friendly sizing e layout unificado
+**Depends on**: Nothing
+**Requirements**: CMP-01, CMP-02, LAY-01, LAY-02, TOG-02, TOG-04
+**Success Criteria** (what must be TRUE):
+  1. StatusToggleButton existe como componente reutilizavel
+  2. Touch target do toggle tem minimo 44x44px
+  3. Badge de status (check verde = pago) visivel em cada card
+  4. Lista unica de transacoes (sem duas colunas separadas)
+  5. Mesmo componente usado no Dashboard e Transacoes
+**Plans**: TBD
+
+Plans:
+- [ ] 01-01: TBD
+
+### Phase 2: Toggle & Form
+**Goal**: Toggle funcional com feedback imediato e integracao no formulario
+**Depends on**: Phase 1
+**Requirements**: TOG-01, TOG-03, FRM-01
+**Success Criteria** (what must be TRUE):
+  1. Usuario pode tocar toggle pra alternar pago/pendente
+  2. UI atualiza imediatamente (< 100ms) antes da resposta do servidor
+  3. Erro do servidor reverte estado visual
+  4. Formulario de nova transacao tem toggle de status
+**Plans**: TBD
+
+Plans:
+- [ ] 02-01: TBD
+
+### Phase 3: Filter Tabs
+**Goal**: Filtro por status via tabs com feedback de contagem
+**Depends on**: Phase 2
+**Requirements**: TAB-01, TAB-02, TAB-03
+**Success Criteria** (what must be TRUE):
+  1. Tabs Todos | Pendentes | Pagos visiveis no topo
+  2. Cada tab mostra contador de itens
+  3. Tab "Todos" selecionada por padrao ao abrir
+  4. Filtro funciona instantaneamente (client-side)
+**Plans**: TBD
+
+Plans:
+- [ ] 03-01: TBD
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Componentes & Layout | 0/TBD | Not started | - |
+| 2. Toggle & Form | 0/TBD | Not started | - |
+| 3. Filter Tabs | 0/TBD | Not started | - |
