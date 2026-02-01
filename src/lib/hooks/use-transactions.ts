@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/database.types";
 import { startOfMonth, endOfMonth, format, addMonths } from "date-fns";
 import { getInstallmentDueDates } from "@/lib/utils/credit-card";
+import { ErrorMessages } from "@/lib/errors";
 
 type Transaction = Tables<"transactions">;
 
@@ -36,7 +37,7 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: async (transaction: Omit<TablesInsert<"transactions">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       const { data, error } = await supabase
         .from("transactions")
@@ -93,7 +94,38 @@ export function useCompleteTransaction() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+
+      const queryCache = queryClient.getQueryCache();
+      const queries = queryCache.findAll({ queryKey: ["transactions"] });
+
+      const previousQueries: Array<{ queryKey: readonly unknown[]; data: unknown }> = [];
+
+      queries.forEach((query) => {
+        const data = query.state.data as Transaction[] | undefined;
+        if (!data) return;
+
+        previousQueries.push({ queryKey: query.queryKey, data });
+
+        queryClient.setQueryData(
+          query.queryKey,
+          data.map((t) =>
+            t.id === id
+              ? { ...t, status: "completed" as const, completed_date: format(new Date(), "yyyy-MM-dd") }
+              : t
+          )
+        );
+      });
+
+      return { previousQueries };
+    },
+    onError: (_err, _id, context) => {
+      context?.previousQueries.forEach(({ queryKey, data }) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["summary"] });
     },
@@ -161,7 +193,7 @@ export function useCreateInstallmentTransaction() {
   return useMutation({
     mutationFn: async (input: InstallmentTransactionInput) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       const dueDates = getInstallmentDueDates(
         input.purchase_date,
