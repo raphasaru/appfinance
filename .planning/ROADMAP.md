@@ -22,10 +22,13 @@ Migrar de duas colunas para lista unica com toggle inline de status e filtro por
   3. Badge de status (check verde = pago) visivel em cada card
   4. Lista unica de transacoes (sem duas colunas separadas)
   5. Mesmo componente usado no Dashboard e Transacoes
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [ ] 01-01-PLAN.md — StatusToggleButton + TransactionCard (Wave 1)
+- [ ] 01-02-PLAN.md — useTransactionFilters hook + TransactionFilters (Wave 1)
+- [ ] 01-03-PLAN.md — TransactionsList refactor + Dashboard integration (Wave 2)
+- [ ] 01-04-PLAN.md — Transacoes page integration (Wave 2)
 
 ### Phase 2: Toggle & Form
 **Goal**: Toggle funcional com feedback imediato e integracao no formulario
@@ -59,6 +62,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Componentes & Layout | 0/TBD | Not started | - |
+| 1. Componentes & Layout | 0/4 | Planned | - |
 | 2. Toggle & Form | 0/TBD | Not started | - |
 | 3. Filter Tabs | 0/TBD | Not started | - |
