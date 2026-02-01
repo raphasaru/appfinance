@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/database.types";
+import { ErrorMessages } from "@/lib/errors";
 
 type BankAccount = Tables<"bank_accounts">;
 
@@ -30,7 +31,7 @@ export function useCreateBankAccount() {
   return useMutation({
     mutationFn: async (account: Omit<TablesInsert<"bank_accounts">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       const { data, error } = await supabase
         .from("bank_accounts")

@@ -33,18 +33,19 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes
+  // Public routes
+  const publicRoutes = ["/", "/pricing", "/termos", "/privacidade"];
   const isAuthPage =
     request.nextUrl.pathname.startsWith("/login") ||
     request.nextUrl.pathname.startsWith("/cadastro") ||
     request.nextUrl.pathname.startsWith("/esqueci-senha") ||
     request.nextUrl.pathname.startsWith("/redefinir-senha");
   const isOnboardingPage = request.nextUrl.pathname.startsWith("/onboarding");
+  const isPublicRoute = publicRoutes.includes(request.nextUrl.pathname);
   const isProtectedRoute =
     !isAuthPage &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
-    request.nextUrl.pathname !== "/" &&
-    request.nextUrl.pathname !== "/pricing";
+    !isPublicRoute &&
+    !request.nextUrl.pathname.startsWith("/auth");
 
   // Redirect unauthenticated users to login
   if (!user && isProtectedRoute) {

@@ -2,7 +2,7 @@
 
 > Documento de planejamento para desenvolvimento futuro do aplicativo Meu Bolso.
 > Data: 26 de Janeiro de 2026
-> Última atualização: 26 de Janeiro de 2026
+> Última atualização: 29 de Janeiro de 2026
 
 ---
 
@@ -14,6 +14,7 @@
 4. [Interface e UX](#4-interface-e-ux)
 5. [Onboarding](#5-onboarding)
 6. [Recursos Premium](#6-recursos-premium)
+7. [MVP e Lançamento](#7-mvp-e-lançamento)
 
 ---
 
@@ -39,7 +40,7 @@ Permitir que o usuário reverta uma transação marcada como `completed` de volt
 
 ---
 
-### 1.2 Compras Parceladas com Forma de Pagamento
+### 1.2 Compras Parceladas com Forma de Pagamento ✅ CONCLUÍDO
 
 **Complexidade:** Alta
 
@@ -84,7 +85,7 @@ ALTER TABLE transactions ADD COLUMN parent_transaction_id UUID REFERENCES transa
 
 ---
 
-### 1.3 Sub-itens em Lançamentos (Compras Detalhadas)
+### 1.3 Sub-itens em Lançamentos (Compras Detalhadas) ✅ CONCLUÍDO
 
 **Complexidade:** Média/Alta
 
@@ -131,7 +132,7 @@ CREATE POLICY "Users can manage own transaction items"
 
 ---
 
-### 1.4 Lançamentos Direto no Cartão com Parcelas
+### 1.4 Lançamentos Direto no Cartão com Parcelas ✅ CONCLUÍDO
 
 **Complexidade:** Alta
 
@@ -164,7 +165,7 @@ ALTER TABLE transactions ADD COLUMN credit_card_id UUID REFERENCES credit_cards(
 
 ---
 
-### 1.5 Transações com Seleção de Conta
+### 1.5 Transações com Seleção de Conta ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -198,7 +199,7 @@ ALTER TABLE profiles ADD COLUMN default_bank_account_id UUID REFERENCES bank_acc
 
 ---
 
-### 1.6 Melhorar Dinâmica Pendente/Concluído
+### 1.6 Melhorar Dinâmica Pendente/Concluído ✅ CONCLUÍDO
 
 **Complexidade:** Média
 
@@ -651,6 +652,148 @@ ALTER TABLE transactions ADD COLUMN custom_category_id UUID REFERENCES custom_ca
 
 ---
 
+## 7. MVP e Lançamento
+
+### 7.1 Remoção da Feature de Investimentos ✅ CONCLUÍDO
+
+**Complexidade:** Baixa
+
+**Descrição:**
+Remover a feature de investimentos do MVP para simplificar o escopo inicial.
+
+**Implementação:**
+- ✅ Deletado `src/app/(dashboard)/investimentos/page.tsx`
+- ✅ Deletado `src/lib/hooks/use-investments.ts`
+- ✅ Removidas mensagens de erro de investimentos em `src/lib/errors.ts`
+- ✅ Menu sidebar e bottom-nav já não tinham link para investimentos
+
+**Arquivos removidos:**
+- `src/app/(dashboard)/investimentos/` (diretório completo)
+- `src/lib/hooks/use-investments.ts`
+
+---
+
+### 7.2 Landing Page Pública ✅ CONCLUÍDO
+
+**Complexidade:** Média
+
+**Descrição:**
+Criar landing page para usuários não autenticados com apresentação do produto, features, preços e CTAs.
+
+**Implementação:**
+
+1. ✅ **Componentes criados:**
+```
+src/components/landing/
+├── index.ts              # Barrel export
+├── header.tsx            # Header sticky com logo e CTAs
+├── hero.tsx              # Hero com mock WhatsApp conversation
+├── features.tsx          # 6 features em grid
+├── how-it-works.tsx      # 3 passos com ícones
+├── pricing-section.tsx   # Cards Free vs Pro
+├── cta-final.tsx         # CTA final antes do footer
+└── footer.tsx            # Footer com links legais
+```
+
+2. ✅ **Seções da landing:**
+- Hero: "Controle suas finanças pelo WhatsApp" + mock conversation
+- Features: WhatsApp, Orçamento, Contas, Cartões, Recorrentes, Gráficos
+- How it works: Criar conta → Vincular WhatsApp → Enviar gastos
+- Pricing: Free (30 msgs) vs Pro (ilimitado)
+- CTA Final: "Pronto para organizar suas finanças?"
+
+3. ✅ **Página atualizada:**
+- `src/app/page.tsx` agora renderiza landing page (antes era redirect)
+
+**Arquivos afetados:**
+- `src/app/page.tsx`
+- Novo: `src/components/landing/*`
+
+---
+
+### 7.3 Páginas Legais (Termos e Privacidade) ✅ CONCLUÍDO
+
+**Complexidade:** Baixa
+
+**Descrição:**
+Criar páginas de Termos de Uso e Política de Privacidade com conteúdo LGPD compliance.
+
+**Implementação:**
+
+1. ✅ **Estrutura de rotas:**
+```
+src/app/(public)/
+├── layout.tsx           # Layout público sem auth
+├── termos/
+│   └── page.tsx         # Termos de Uso
+└── privacidade/
+    └── page.tsx         # Política de Privacidade
+```
+
+2. ✅ **Conteúdo Termos de Uso:**
+- Definições
+- Cadastro e Conta
+- Uso do Serviço
+- Pagamentos e Assinatura
+- Integração WhatsApp
+- Propriedade Intelectual
+- Limitação de Responsabilidade
+- Rescisão
+- Alterações nos Termos
+- Lei Aplicável (Brasil)
+- Contato
+
+3. ✅ **Conteúdo Política de Privacidade (LGPD):**
+- Dados Coletados
+- Finalidade do Uso
+- Base Legal
+- Compartilhamento (Supabase, Stripe, WhatsApp)
+- Direitos do Titular (acesso, correção, exclusão, portabilidade)
+- Retenção de Dados
+- Segurança
+- Cookies
+- Transferência Internacional
+- Alterações
+- Contato DPO
+
+4. ✅ **Middleware atualizado:**
+- Rotas públicas: `/`, `/pricing`, `/termos`, `/privacidade`
+
+**Arquivos afetados:**
+- `src/middleware.ts`
+- Novo: `src/app/(public)/layout.tsx`
+- Novo: `src/app/(public)/termos/page.tsx`
+- Novo: `src/app/(public)/privacidade/page.tsx`
+
+---
+
+### 7.4 Páginas de Erro ✅ CONCLUÍDO
+
+**Complexidade:** Baixa
+
+**Descrição:**
+Criar páginas de erro 404 e error boundary com design consistente.
+
+**Implementação:**
+
+1. ✅ **404 Not Found:**
+- Código "404" grande e sutil
+- Mensagem "Página não encontrada"
+- Botão "Voltar" e "Ir para início"
+
+2. ✅ **Error Boundary:**
+- Ícone de alerta
+- Mensagem "Algo deu errado"
+- Botão "Tentar novamente" (reset)
+- Botão "Ir para início"
+- Console.error para debugging
+
+**Arquivos criados:**
+- `src/app/not-found.tsx`
+- `src/app/error.tsx`
+
+---
+
 ## Ordem de Implementação Sugerida
 
 ### Fase 1 - Quick Wins (Baixa Complexidade) ✅ CONCLUÍDA (26/01/2026)
@@ -666,12 +809,12 @@ ALTER TABLE transactions ADD COLUMN custom_category_id UUID REFERENCES custom_ca
 7. ✅ 2.2 - Mensagem consome 1 uso
 8. ✅ 2.4 - Mostrar itens no relatório de confirmação
 
-### Fase 3 - Transações Avançadas
-9. 1.5 - Transações com conta
-10. 1.2 - Compras parceladas
-11. 1.3 - Sub-itens em lançamentos
-12. 1.4 - Lançamentos no cartão
-13. 1.6 - Melhorar pendente/concluído
+### Fase 3 - Transações Avançadas ✅ CONCLUÍDA (27/01/2026)
+9. ✅ 1.5 - Transações com conta
+10. ✅ 1.2 - Compras parceladas
+11. ✅ 1.3 - Sub-itens em lançamentos
+12. ✅ 1.4 - Lançamentos no cartão
+13. ✅ 1.6 - Melhorar pendente/concluído
 
 ### Fase 4 - Relatórios ✅ CONCLUÍDA (28/01/2026)
 14. ✅ 3.1 - Relatório de períodos
@@ -680,6 +823,20 @@ ALTER TABLE transactions ADD COLUMN custom_category_id UUID REFERENCES custom_ca
 ### Fase 5 - Premium e Onboarding ✅ CONCLUÍDA (29/01/2026)
 16. ✅ 6.1 - Categorias personalizadas
 17. ✅ 5.1 - Fluxo de onboarding
+
+### Fase 6 - MVP e Lançamento ✅ CONCLUÍDA (29/01/2026)
+18. ✅ 7.1 - Remoção de investimentos (simplificar MVP)
+19. ✅ 7.2 - Landing page pública
+20. ✅ 7.3 - Páginas legais (Termos + Privacidade LGPD)
+21. ✅ 7.4 - Páginas de erro (404 + Error Boundary)
+
+### Fase 7 - Pós-Lançamento (Próximos Passos)
+22. [ ] Widget de transações vencendo
+23. [ ] Visualizar fatura do cartão por mês
+24. [ ] Relatório de parcelas futuras
+25. [ ] Exportação PDF/Excel
+26. [ ] Modo offline básico (PWA)
+27. [ ] Notificações push
 
 ---
 

@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert } from "@/lib/database.types";
 import { format, startOfMonth, endOfMonth, getDaysInMonth } from "date-fns";
+import { ErrorMessages } from "@/lib/errors";
 
 type RecurringTemplate = Tables<"recurring_templates">;
 
@@ -31,7 +32,7 @@ export function useCreateRecurringTemplate() {
   return useMutation({
     mutationFn: async (template: Omit<TablesInsert<"recurring_templates">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       const { data, error } = await supabase
         .from("recurring_templates")
@@ -89,7 +90,7 @@ export function useGenerateMonthlyTransactions() {
   return useMutation({
     mutationFn: async (month: Date) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       // Get active templates
       const { data: templates, error: templatesError } = await supabase

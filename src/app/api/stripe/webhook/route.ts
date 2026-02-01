@@ -83,15 +83,36 @@ export async function POST(request: NextRequest) {
 }
 
 async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
-  const userId = session.metadata?.user_id
-  const planId = session.metadata?.plan_id as SubscriptionPlan
-
-  if (!userId || !planId) {
-    console.error('Missing metadata in checkout session')
-    return
-  }
-
+  let userId = session.metadata?.user_id
+  const planId = (session.metadata?.plan_id as SubscriptionPlan) || 'pro'
+  const customerId = session.customer as string
   const subscriptionId = session.subscription as string
+
+  if (!userId) {
+    console.error('[CRITICAL] Missing user_id metadata in checkout session:', {
+      sessionId: session.id,
+      customerId,
+      subscriptionId,
+    })
+
+    // Try to recover user via customer_id
+    const { data: existingSub } = await supabase
+      .from('subscriptions')
+      .select('user_id')
+      .eq('stripe_customer_id', customerId)
+      .single()
+
+    if (existingSub?.user_id) {
+      userId = existingSub.user_id
+      console.log(`[RECOVERED] Found user ${userId} via customer_id ${customerId}`)
+    } else {
+      console.error('[CRITICAL] Could not recover user for checkout:', {
+        sessionId: session.id,
+        customerId,
+      })
+      return
+    }
+  }
 
   // Get subscription details from Stripe
   const subscription = await getStripe().subscriptions.retrieve(subscriptionId)

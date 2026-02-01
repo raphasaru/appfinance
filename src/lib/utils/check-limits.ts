@@ -24,13 +24,13 @@ export async function checkWhatsAppLimit(
 
   if (error) {
     console.error('Error checking WhatsApp limit:', error)
-    // Default to allowing the message on error (fail open)
+    // Fail closed to prevent usage beyond limit
     return {
-      canSend: true,
+      canSend: false,
       messagesUsed: 0,
       messagesLimit: FREE_WHATSAPP_LIMIT,
       plan: 'free',
-      isAtLimit: false,
+      isAtLimit: true,
     }
   }
 
@@ -72,7 +72,7 @@ export async function incrementWhatsAppMessage(
 
   if (error) {
     console.error('Error incrementing WhatsApp message:', error)
-    return { success: true, messagesUsed: 0, messagesLimit: FREE_WHATSAPP_LIMIT }
+    return { success: false, messagesUsed: 0, messagesLimit: FREE_WHATSAPP_LIMIT }
   }
 
   const result = data?.[0]

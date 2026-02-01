@@ -103,13 +103,13 @@ export function CreditCardForm({
       return;
     }
 
-    if (dueDay < 1 || dueDay > 31) {
-      toast.error("Dia de vencimento deve ser entre 1 e 31");
+    if (dueDay < 1 || dueDay > 28) {
+      toast.error("Dia de vencimento deve ser entre 1 e 28 (para funcionar em todos os meses)");
       return;
     }
 
-    if (closingDay < 1 || closingDay > 31) {
-      toast.error("Dia de fechamento deve ser entre 1 e 31");
+    if (closingDay < 1 || closingDay > 28) {
+      toast.error("Dia de fechamento deve ser entre 1 e 28 (para funcionar em todos os meses)");
       return;
     }
 
@@ -192,7 +192,7 @@ export function CreditCardForm({
             id="closing_day"
             type="number"
             min="1"
-            max="31"
+            max="28"
             placeholder="Ex: 5"
             {...form.register("closing_day")}
           />
@@ -209,7 +209,7 @@ export function CreditCardForm({
             id="due_day"
             type="number"
             min="1"
-            max="31"
+            max="28"
             placeholder="Ex: 15"
             {...form.register("due_day")}
           />

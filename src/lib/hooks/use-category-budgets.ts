@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, Enums } from "@/lib/database.types";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+import { ErrorMessages } from "@/lib/errors";
 
 type CategoryBudget = Tables<"category_budgets">;
 type ExpenseCategory = Enums<"expense_category">;
@@ -32,7 +33,7 @@ export function useUpsertCategoryBudget() {
   return useMutation({
     mutationFn: async (budgets: Array<{ category: ExpenseCategory; monthly_budget: number }>) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       // Get existing budgets
       const { data: existing } = await supabase

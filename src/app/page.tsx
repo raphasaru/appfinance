@@ -1,13 +1,25 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import {
+  Header,
+  Hero,
+  Features,
+  HowItWorks,
+  PricingSection,
+  CtaFinal,
+  Footer,
+} from "@/components/landing";
 
-export default async function Home() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (user) {
-    redirect("/dashboard");
-  } else {
-    redirect("/login");
-  }
+export default function Home() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <Hero />
+        <Features />
+        <HowItWorks />
+        <PricingSection />
+        <CtaFinal />
+      </main>
+      <Footer />
+    </div>
+  );
 }
