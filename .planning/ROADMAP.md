@@ -7,7 +7,7 @@ Migrar de duas colunas para lista unica com toggle inline de status e filtro por
 ## Phases
 
 - [x] **Phase 1: Componentes & Layout** - Extrair componentes reutilizaveis, lista unica, touch targets 44px ✓
-- [ ] **Phase 2: Toggle & Form** - Toggle inline com optimistic updates, toggle no formulario
+- [x] **Phase 2: Toggle & Form** - Toggle inline com optimistic updates, toggle no formulario ✓
 - [ ] **Phase 3: Filter Tabs** - Tabs Todos/Pendentes/Pagos com contadores
 
 ## Phase Details
@@ -42,8 +42,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Optimistic updates for toggle mutations (Wave 1)
-- [ ] 02-02-PLAN.md — Status toggle in TransactionForm (Wave 1)
+- [x] 02-01-PLAN.md — Optimistic updates for toggle mutations (Wave 1) ✓
+- [x] 02-02-PLAN.md — Status toggle in TransactionForm (Wave 1) ✓
 
 ### Phase 3: Filter Tabs
 **Goal**: Filtro por status via tabs com feedback de contagem
@@ -64,5 +64,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Componentes & Layout | 4/4 | ✓ Complete | 2026-02-01 |
-| 2. Toggle & Form | 0/2 | In progress | - |
+| 2. Toggle & Form | 2/2 | ✓ Complete | 2026-02-01 |
 | 3. Filter Tabs | 0/TBD | Not started | - |
