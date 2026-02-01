@@ -148,7 +148,38 @@ export function useUncompleteTransaction() {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ["transactions"] });
+
+      const queryCache = queryClient.getQueryCache();
+      const queries = queryCache.findAll({ queryKey: ["transactions"] });
+
+      const previousQueries: Array<{ queryKey: readonly unknown[]; data: unknown }> = [];
+
+      queries.forEach((query) => {
+        const data = query.state.data as Transaction[] | undefined;
+        if (!data) return;
+
+        previousQueries.push({ queryKey: query.queryKey, data });
+
+        queryClient.setQueryData(
+          query.queryKey,
+          data.map((t) =>
+            t.id === id
+              ? { ...t, status: "planned" as const, completed_date: null }
+              : t
+          )
+        );
+      });
+
+      return { previousQueries };
+    },
+    onError: (_err, _id, context) => {
+      context?.previousQueries.forEach(({ queryKey, data }) => {
+        queryClient.setQueryData(queryKey, data);
+      });
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["summary"] });
     },
