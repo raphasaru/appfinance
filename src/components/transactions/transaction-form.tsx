@@ -59,6 +59,7 @@ const formSchema = z.object({
   bank_account_id: z.string().optional(),
   credit_card_id: z.string().optional(),
   installments: z.number().min(1).max(48).optional(),
+  status: z.enum(["planned", "completed"]),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -111,6 +112,7 @@ export function TransactionForm({
       bank_account_id: undefined,
       credit_card_id: undefined,
       installments: 1,
+      status: "planned",
     },
   });
 
@@ -129,6 +131,7 @@ export function TransactionForm({
           bank_account_id: transaction.bank_account_id || undefined,
           credit_card_id: transaction.credit_card_id || undefined,
           installments: transaction.total_installments || 1,
+          status: transaction.status ?? "planned",
         });
         setItems([]);
       } else {
@@ -143,6 +146,7 @@ export function TransactionForm({
           bank_account_id: undefined,
           credit_card_id: undefined,
           installments: 1,
+          status: "planned",
         });
         setItems([]);
       }
