@@ -9,50 +9,41 @@ import { QuickActions } from "@/components/dashboard/quick-actions";
 import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { TransactionsList } from "@/components/dashboard/transactions-list";
 import { TransactionCard } from "@/components/transactions/transaction-card";
+import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import { useTransactions } from "@/lib/hooks/use-transactions";
 import { useMonthlySummary } from "@/lib/hooks/use-summary";
+import { useTransactionFilters } from "@/lib/hooks/use-transaction-filters";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, ChevronRight } from "lucide-react";
 import { Tables } from "@/lib/database.types";
 
 type Transaction = Tables<"transactions">;
 
-type StatusFilter = "all" | "pending" | "completed";
-
 export default function DashboardPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [formOpen, setFormOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
   const { data: transactions, isLoading: transactionsLoading } = useTransactions(currentMonth);
   const { data: summary, isLoading: summaryLoading } = useMonthlySummary(currentMonth);
 
-  const pendingTransactions = transactions?.filter((t) => t.status === "planned") || [];
-  const completedTransactions = transactions?.filter((t) => t.status === "completed") || [];
+  // Use centralized filter hook
+  const { filtered, counts, statusFilter, setStatusFilter } = useTransactionFilters({
+    transactions,
+  });
 
-  // Filter and sort transactions for mobile view
-  const filteredTransactions = useMemo(() => {
-    let result = transactions || [];
-
-    if (statusFilter === "pending") {
-      result = result.filter((t) => t.status === "planned");
-    } else if (statusFilter === "completed") {
-      result = result.filter((t) => t.status === "completed");
-    }
-
-    // Sort by date descending (most recent first)
-    return [...result].sort((a, b) =>
+  // Sort filtered transactions by date descending
+  const sortedTransactions = useMemo(() => {
+    return [...filtered].sort((a, b) =>
       new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
     );
-  }, [transactions, statusFilter]);
+  }, [filtered]);
 
-  // Get recent 5 transactions sorted by date (for "all" filter display limit)
+  // Limit display on mobile for "all" filter
   const displayTransactions = statusFilter === "all"
-    ? filteredTransactions.slice(0, 5)
-    : filteredTransactions;
+    ? sortedTransactions.slice(0, 5)
+    : sortedTransactions;
 
   const handleEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
@@ -82,7 +73,7 @@ export default function DashboardPage() {
           action={
             <Button onClick={handleAdd}>
               <Plus className="h-4 w-4 mr-2" />
-              Nova Transação
+              Nova Transacao
             </Button>
           }
         />
@@ -117,7 +108,7 @@ export default function DashboardPage() {
         {/* Transactions with Filter */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold">Transações</h2>
+            <h2 className="text-base font-semibold">Transacoes</h2>
             <Link
               href="/transacoes"
               className="flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-light transition-colors"
@@ -128,28 +119,12 @@ export default function DashboardPage() {
           </div>
 
           {/* Status Filter Tabs */}
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="all" className="text-xs">
-                Todas
-                <span className="ml-1.5 text-[10px] opacity-70">
-                  {transactions?.length || 0}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="pending" className="text-xs">
-                Pendentes
-                <span className="ml-1.5 text-[10px] opacity-70">
-                  {pendingTransactions.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger value="completed" className="text-xs">
-                Concluídas
-                <span className="ml-1.5 text-[10px] opacity-70">
-                  {completedTransactions.length}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <TransactionFilters
+            statusFilter={statusFilter}
+            onStatusChange={setStatusFilter}
+            counts={counts}
+            variant="tabs"
+          />
 
           {transactionsLoading ? (
             <div className="space-y-2">
@@ -166,21 +141,21 @@ export default function DashboardPage() {
                   onEdit={handleEdit}
                 />
               ))}
-              {statusFilter === "all" && filteredTransactions.length > 5 && (
+              {statusFilter === "all" && sortedTransactions.length > 5 && (
                 <Link
                   href="/transacoes"
                   className="block text-center py-3 text-sm text-primary hover:text-primary-light transition-colors"
                 >
-                  Ver mais {filteredTransactions.length - 5} transações
+                  Ver mais {sortedTransactions.length - 5} transacoes
                 </Link>
               )}
             </div>
           ) : (
             <div className="text-center py-12 text-muted-foreground bg-card rounded-xl">
               <p>
-                {statusFilter === "pending" && "Nenhuma transação pendente"}
-                {statusFilter === "completed" && "Nenhuma transação concluída"}
-                {statusFilter === "all" && "Nenhuma transação neste mês"}
+                {statusFilter === "pending" && "Nenhuma transacao pendente"}
+                {statusFilter === "completed" && "Nenhuma transacao concluida"}
+                {statusFilter === "all" && "Nenhuma transacao neste mes"}
               </p>
               <p className="text-sm mt-1">Toque no + para adicionar</p>
             </div>
@@ -203,8 +178,10 @@ export default function DashboardPage() {
       {/* Desktop Transactions */}
       <div className="hidden md:block">
         <TransactionsList
-          pendingTransactions={pendingTransactions}
-          completedTransactions={completedTransactions}
+          transactions={sortedTransactions}
+          statusFilter={statusFilter}
+          onStatusChange={setStatusFilter}
+          counts={counts}
           onEdit={handleEdit}
           onAdd={handleAdd}
           isLoading={transactionsLoading}
