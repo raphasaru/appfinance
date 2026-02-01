@@ -5,8 +5,10 @@ import { PageHeader } from "@/components/dashboard/page-header";
 import { MonthSelector } from "@/components/dashboard/month-selector";
 import { TransactionCard } from "@/components/transactions/transaction-card";
 import { TransactionForm } from "@/components/transactions/transaction-form";
+import { TransactionFilters } from "@/components/transactions/transaction-filters";
 import { useTransactions, useBatchCompleteTransactions } from "@/lib/hooks/use-transactions";
 import { useMonthlySummary } from "@/lib/hooks/use-summary";
+import { useTransactionFilters, StatusFilter } from "@/lib/hooks/use-transaction-filters";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -27,7 +29,6 @@ import { toast } from "sonner";
 type Transaction = Tables<"transactions">;
 
 type TypeFilter = "all" | "income" | "expense";
-type StatusFilter = "all" | "planned" | "completed";
 type SortField = "date" | "description" | "amount";
 type SortOrder = "asc" | "desc";
 
@@ -43,7 +44,6 @@ const sortLabels: Record<`${SortField}_${SortOrder}`, string> = {
 export default function TransacoesPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [formOpen, setFormOpen] = useState(false);
@@ -57,25 +57,19 @@ export default function TransacoesPage() {
   const { data: summary } = useMonthlySummary(currentMonth);
   const batchCompleteMutation = useBatchCompleteTransactions();
 
+  // Use shared filter hook
+  const { filtered: statusFiltered, counts, statusFilter, setStatusFilter } =
+    useTransactionFilters({ transactions });
+
   const sortKey = `${sortField}_${sortOrder}` as `${SortField}_${SortOrder}`;
 
-  // Calculate counts
-  const pendingCount = useMemo(() => {
-    return transactions?.filter(t => t.status === "planned").length || 0;
-  }, [transactions]);
-
-  const completedCount = useMemo(() => {
-    return transactions?.filter(t => t.status === "completed").length || 0;
-  }, [transactions]);
-
   const filteredAndSortedTransactions = useMemo(() => {
-    let result = transactions?.filter((t) => {
-      // Type filter
-      if (typeFilter !== "all" && t.type !== typeFilter) return false;
-      // Status filter
-      if (statusFilter !== "all" && t.status !== statusFilter) return false;
-      return true;
-    }) || [];
+    let result = statusFiltered;
+
+    // Type filter (adicional)
+    if (typeFilter !== "all") {
+      result = result.filter(t => t.type === typeFilter);
+    }
 
     // Sort transactions
     result = [...result].sort((a, b) => {
@@ -97,7 +91,7 @@ export default function TransacoesPage() {
     });
 
     return result;
-  }, [transactions, typeFilter, statusFilter, sortField, sortOrder]);
+  }, [statusFiltered, typeFilter, sortField, sortOrder]);
 
   const filteredTransactions = filteredAndSortedTransactions;
 
@@ -153,59 +147,18 @@ export default function TransacoesPage() {
     if (selectedIds.size === 0) return;
     try {
       await batchCompleteMutation.mutateAsync(Array.from(selectedIds));
-      toast.success(`${selectedIds.size} transações marcadas como pagas`);
+      toast.success(`${selectedIds.size} transacoes marcadas como pagas`);
       setSelectedIds(new Set());
       setSelectionMode(false);
     } catch {
-      toast.error("Erro ao atualizar transações");
+      toast.error("Erro ao atualizar transacoes");
     }
   };
 
-  // Status filter tabs component
-  const StatusFilterTabs = ({ className }: { className?: string }) => (
-    <div className={cn("flex gap-1 bg-muted p-1 rounded-lg", className)}>
-      <button
-        onClick={() => setStatusFilter("all")}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-          statusFilter === "all"
-            ? "bg-background shadow-sm"
-            : "hover:bg-background/50"
-        )}
-      >
-        Todas
-        <span className="text-xs text-muted-foreground">({transactions?.length || 0})</span>
-      </button>
-      <button
-        onClick={() => setStatusFilter("planned")}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-          statusFilter === "planned"
-            ? "bg-background shadow-sm"
-            : "hover:bg-background/50"
-        )}
-      >
-        Pendentes
-        {pendingCount > 0 && (
-          <Badge variant="secondary" className="h-5 px-1.5 text-xs bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-            {pendingCount}
-          </Badge>
-        )}
-      </button>
-      <button
-        onClick={() => setStatusFilter("completed")}
-        className={cn(
-          "flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
-          statusFilter === "completed"
-            ? "bg-background shadow-sm"
-            : "hover:bg-background/50"
-        )}
-      >
-        Concluídas
-        <span className="text-xs text-muted-foreground">({completedCount})</span>
-      </button>
-    </div>
-  );
+  // Handler for status filter - maps StatusFilter to database status
+  const handleStatusFilterChange = (filter: StatusFilter) => {
+    setStatusFilter(filter);
+  };
 
   return (
     <div className="space-y-6">
@@ -217,7 +170,7 @@ export default function TransacoesPage() {
       {/* Desktop Header */}
       <div className="hidden md:block">
         <PageHeader
-          title="Transações"
+          title="Transacoes"
           currentMonth={currentMonth}
           onMonthChange={setCurrentMonth}
           action={
@@ -228,7 +181,7 @@ export default function TransacoesPage() {
               </Button>
               <Button onClick={handleAdd}>
                 <Plus className="h-4 w-4 mr-2" />
-                Nova Transação
+                Nova Transacao
               </Button>
             </div>
           }
@@ -237,7 +190,12 @@ export default function TransacoesPage() {
 
       {/* Status Filter Tabs - Mobile */}
       <div className="px-4 md:hidden">
-        <StatusFilterTabs />
+        <TransactionFilters
+          statusFilter={statusFilter}
+          onStatusChange={handleStatusFilterChange}
+          counts={counts}
+          variant="pills"
+        />
       </div>
 
       {/* Mobile Tabs + Sort */}
@@ -407,7 +365,7 @@ export default function TransacoesPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               <button
-                onClick={() => setStatusFilter("all")}
+                onClick={() => handleStatusFilterChange("all")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   statusFilter === "all"
@@ -416,33 +374,33 @@ export default function TransacoesPage() {
                 )}
               >
                 <span>Todas</span>
-                <span className="text-xs opacity-70">{transactions?.length || 0}</span>
+                <span className="text-xs opacity-70">{counts.all}</span>
               </button>
               <button
-                onClick={() => setStatusFilter("planned")}
+                onClick={() => handleStatusFilterChange("pending")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                  statusFilter === "planned"
+                  statusFilter === "pending"
                     ? "bg-amber-500 text-white"
                     : "hover:bg-muted"
                 )}
               >
                 <span>Pendentes</span>
-                {pendingCount > 0 ? (
+                {counts.pending > 0 ? (
                   <Badge variant="secondary" className={cn(
                     "h-5 px-1.5 text-xs",
-                    statusFilter === "planned"
+                    statusFilter === "pending"
                       ? "bg-white/20 text-white"
                       : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                   )}>
-                    {pendingCount}
+                    {counts.pending}
                   </Badge>
                 ) : (
                   <span className="text-xs opacity-70">0</span>
                 )}
               </button>
               <button
-                onClick={() => setStatusFilter("completed")}
+                onClick={() => handleStatusFilterChange("completed")}
                 className={cn(
                   "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   statusFilter === "completed"
@@ -450,8 +408,8 @@ export default function TransacoesPage() {
                     : "hover:bg-muted"
                 )}
               >
-                <span>Concluídas</span>
-                <span className="text-xs opacity-70">{completedCount}</span>
+                <span>Concluidas</span>
+                <span className="text-xs opacity-70">{counts.completed}</span>
               </button>
             </CardContent>
           </Card>
@@ -459,7 +417,7 @@ export default function TransacoesPage() {
           {/* Summary Card */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Resumo do Mês</CardTitle>
+              <CardTitle className="text-sm font-medium">Resumo do Mes</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
@@ -494,9 +452,9 @@ export default function TransacoesPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">
-                {typeFilter === "all" && statusFilter === "all" && "Todas as Transações"}
-                {typeFilter === "all" && statusFilter === "planned" && "Transações Pendentes"}
-                {typeFilter === "all" && statusFilter === "completed" && "Transações Concluídas"}
+                {typeFilter === "all" && statusFilter === "all" && "Todas as Transacoes"}
+                {typeFilter === "all" && statusFilter === "pending" && "Transacoes Pendentes"}
+                {typeFilter === "all" && statusFilter === "completed" && "Transacoes Concluidas"}
                 {typeFilter === "income" && "Receitas"}
                 {typeFilter === "expense" && "Despesas"}
               </CardTitle>
@@ -555,8 +513,8 @@ export default function TransacoesPage() {
             ) : (
               <div className="text-center py-12 text-muted-foreground">
                 <Receipt className="h-12 w-12 mx-auto mb-4 opacity-20" />
-                <p>Nenhuma transação encontrada</p>
-                <p className="text-sm mt-1">Clique em "Nova Transação" para adicionar</p>
+                <p>Nenhuma transacao encontrada</p>
+                <p className="text-sm mt-1">Clique em "Nova Transacao" para adicionar</p>
               </div>
             )}
           </CardContent>
@@ -584,7 +542,7 @@ export default function TransacoesPage() {
           ))
         ) : (
           <div className="text-center py-12 text-muted-foreground">
-            <p>Nenhuma transação encontrada</p>
+            <p>Nenhuma transacao encontrada</p>
           </div>
         )}
       </div>
