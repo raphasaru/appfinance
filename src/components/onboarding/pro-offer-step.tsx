@@ -1,6 +1,7 @@
 "use client"
 
-import { Crown, Check, Zap } from "lucide-react"
+import { Crown, Check, Zap, Loader2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCreateCheckout } from "@/lib/hooks/use-subscription"
@@ -23,10 +24,15 @@ export function ProOfferStep({ onNext }: StepProps) {
 
   const handleUpgrade = async () => {
     try {
-      const { url } = await createCheckout.mutateAsync("pro")
-      window.location.href = url
+      const result = await createCheckout.mutateAsync("pro")
+      if (result.url) {
+        window.location.href = result.url
+      } else {
+        toast.error("Erro ao criar checkout")
+      }
     } catch (error) {
-      // User will see the error in the UI
+      console.error("Checkout error:", error)
+      toast.error("Erro ao processar. Tente novamente.")
     }
   }
 
@@ -100,8 +106,17 @@ export function ProOfferStep({ onNext }: StepProps) {
             onClick={handleUpgrade}
             disabled={createCheckout.isPending}
           >
-            <Crown className="h-4 w-4 mr-2" />
-            Assinar Pro
+            {createCheckout.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processando...
+              </>
+            ) : (
+              <>
+                <Crown className="h-4 w-4 mr-2" />
+                Assinar Pro
+              </>
+            )}
           </Button>
         </CardContent>
       </Card>
