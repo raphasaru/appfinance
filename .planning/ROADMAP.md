@@ -39,10 +39,11 @@ Plans:
   2. UI atualiza imediatamente (< 100ms) antes da resposta do servidor
   3. Erro do servidor reverte estado visual
   4. Formulario de nova transacao tem toggle de status
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [ ] 02-01-PLAN.md — Optimistic updates for toggle mutations (Wave 1)
+- [ ] 02-02-PLAN.md — Status toggle in TransactionForm (Wave 1)
 
 ### Phase 3: Filter Tabs
 **Goal**: Filtro por status via tabs com feedback de contagem
@@ -63,5 +64,5 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Componentes & Layout | 4/4 | ✓ Complete | 2026-02-01 |
-| 2. Toggle & Form | 0/TBD | Not started | - |
+| 2. Toggle & Form | 0/2 | In progress | - |
 | 3. Filter Tabs | 0/TBD | Not started | - |
