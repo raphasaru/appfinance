@@ -255,6 +255,8 @@ export function TransactionForm({
       credit_card_id: showCreditCard ? data.credit_card_id || null : null,
       installment_number: isCredit && !isEditing ? 1 : null,
       total_installments: isCredit && !isEditing ? 1 : null,
+      status: data.status as "planned" | "completed",
+      completed_date: data.status === "completed" ? data.due_date : null,
     };
 
     try {
