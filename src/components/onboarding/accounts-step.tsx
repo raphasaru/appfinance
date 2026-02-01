@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { useBankAccounts, useCreateBankAccount } from "@/lib/hooks/use-bank-accounts"
 import { formatCurrency } from "@/lib/utils/currency"
+import { BRAZILIAN_BANKS } from "@/lib/utils/brazilian-banks"
 
 interface StepProps {
   onNext: () => void
@@ -25,6 +26,7 @@ export function AccountsStep({ onNext }: StepProps) {
   const { data: accounts, isLoading } = useBankAccounts()
   const createAccount = useCreateBankAccount()
   const [isAdding, setIsAdding] = useState(false)
+  const [customBankName, setCustomBankName] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     bank_name: "",
@@ -41,14 +43,19 @@ export function AccountsStep({ onNext }: StepProps) {
     }
 
     try {
+      const bankLabel = formData.bank_name === "other"
+        ? customBankName
+        : BRAZILIAN_BANKS.find(b => b.value === formData.bank_name)?.label || null
+
       await createAccount.mutateAsync({
         name: formData.name,
-        bank_name: formData.bank_name || null,
+        bank_name: bankLabel,
         type: formData.type,
         balance: parseFloat(formData.balance) || 0,
       })
       toast.success("Conta adicionada")
       setFormData({ name: "", bank_name: "", type: "checking", balance: "" })
+      setCustomBankName("")
       setIsAdding(false)
     } catch (error) {
       toast.error("Erro ao criar conta")
@@ -110,14 +117,38 @@ export function AccountsStep({ onNext }: StepProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="bank_name">Banco (opcional)</Label>
-            <Input
-              id="bank_name"
+            <Label htmlFor="bank_name">Banco</Label>
+            <Select
               value={formData.bank_name}
-              onChange={(e) => setFormData({ ...formData, bank_name: e.target.value })}
-              placeholder="Ex: Nu Pagamentos S.A."
-            />
+              onValueChange={(value) => {
+                setFormData({ ...formData, bank_name: value })
+                if (value !== "other") setCustomBankName("")
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o banco" />
+              </SelectTrigger>
+              <SelectContent>
+                {BRAZILIAN_BANKS.map((bank) => (
+                  <SelectItem key={bank.value} value={bank.value}>
+                    {bank.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {formData.bank_name === "other" && (
+            <div className="space-y-2">
+              <Label htmlFor="custom_bank">Nome do banco</Label>
+              <Input
+                id="custom_bank"
+                value={customBankName}
+                onChange={(e) => setCustomBankName(e.target.value)}
+                placeholder="Digite o nome do banco"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="type">Tipo</Label>
