@@ -6,6 +6,8 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { BRAZILIAN_BANKS } from "@/lib/utils/brazilian-banks"
 import { Card, CardContent } from "@/components/ui/card"
 import { useCreditCards, useCreateCreditCard } from "@/lib/hooks/use-credit-cards"
 import { formatCurrency } from "@/lib/utils/currency"
@@ -18,6 +20,8 @@ export function CardsStep({ onNext }: StepProps) {
   const { data: cards, isLoading } = useCreditCards()
   const createCard = useCreateCreditCard()
   const [isAdding, setIsAdding] = useState(false)
+  const [selectedBank, setSelectedBank] = useState("")
+  const [customBankName, setCustomBankName] = useState("")
   const [formData, setFormData] = useState({
     name: "",
     credit_limit: "",
@@ -47,6 +51,8 @@ export function CardsStep({ onNext }: StepProps) {
       })
       toast.success("Cartão adicionado")
       setFormData({ name: "", credit_limit: "", due_day: "", closing_day: "" })
+      setSelectedBank("")
+      setCustomBankName("")
       setIsAdding(false)
     } catch (error) {
       toast.error("Erro ao criar cartão")
@@ -103,14 +109,45 @@ export function CardsStep({ onNext }: StepProps) {
       {isAdding ? (
         <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do cartão</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              placeholder="Ex: Nubank"
-            />
+            <Label htmlFor="bank">Emissor do cartão</Label>
+            <Select
+              value={selectedBank}
+              onValueChange={(value) => {
+                setSelectedBank(value)
+                if (value !== "other") {
+                  setCustomBankName("")
+                  const label = BRAZILIAN_BANKS.find(b => b.value === value)?.label || ""
+                  setFormData({ ...formData, name: label })
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o emissor" />
+              </SelectTrigger>
+              <SelectContent>
+                {BRAZILIAN_BANKS.map((bank) => (
+                  <SelectItem key={bank.value} value={bank.value}>
+                    {bank.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
+
+          {selectedBank === "other" && (
+            <div className="space-y-2">
+              <Label htmlFor="custom_name">Nome do cartão</Label>
+              <Input
+                id="custom_name"
+                value={customBankName}
+                onChange={(e) => {
+                  setCustomBankName(e.target.value)
+                  setFormData({ ...formData, name: e.target.value })
+                }}
+                placeholder="Ex: Credicard"
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="credit_limit">Limite</Label>
