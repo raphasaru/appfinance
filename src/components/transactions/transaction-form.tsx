@@ -47,6 +47,7 @@ import { PAYMENT_METHOD_CONFIG, PaymentMethod } from "@/lib/utils/payment-method
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, ChevronDown, Crown } from "lucide-react";
 import { useMediaQuery } from "@/lib/hooks/use-media-query";
+import { StatusToggleButton } from "@/components/transactions/status-toggle-button";
 
 const formSchema = z.object({
   description: z.string().min(1, "Descrição obrigatória"),
@@ -378,6 +379,24 @@ export function TransactionForm({
           id="due_date"
           type="date"
           {...form.register("due_date")}
+        />
+      </div>
+
+      {/* Status toggle */}
+      <div className="flex items-center justify-between py-2">
+        <div className="space-y-0.5">
+          <Label>Status</Label>
+          <p className="text-xs text-muted-foreground">
+            {form.watch("status") === "completed" ? "Já pago" : "Pendente"}
+          </p>
+        </div>
+        <StatusToggleButton
+          status={form.watch("status") || "planned"}
+          onToggle={() => {
+            const current = form.watch("status");
+            form.setValue("status", current === "completed" ? "planned" : "completed");
+          }}
+          size="md"
         />
       </div>
 
