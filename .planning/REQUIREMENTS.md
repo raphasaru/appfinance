@@ -8,9 +8,9 @@
 ### Toggle de Status
 
 - [ ] **TOG-01**: Toggle em cada card de transacao pra marcar pago/pendente
-- [ ] **TOG-02**: Touch target minimo 44x44px no toggle
+- [x] **TOG-02**: Touch target minimo 44x44px no toggle ✓
 - [ ] **TOG-03**: Optimistic update — feedback visual imediato antes da resposta do servidor
-- [ ] **TOG-04**: Badge/icone diferenciando status (check verde = pago)
+- [x] **TOG-04**: Badge/icone diferenciando status (check verde = pago) ✓
 
 ### Filtro por Tabs
 
@@ -20,8 +20,8 @@
 
 ### Layout
 
-- [ ] **LAY-01**: Lista unica de transacoes (remover duas colunas)
-- [ ] **LAY-02**: Mesma UX aplicada no Dashboard e pagina Transacoes
+- [x] **LAY-01**: Lista unica de transacoes (remover duas colunas) ✓
+- [x] **LAY-02**: Mesma UX aplicada no Dashboard e pagina Transacoes ✓
 
 ### Formulario
 
@@ -29,8 +29,8 @@
 
 ### Componentes
 
-- [ ] **CMP-01**: Componentes reutilizaveis entre Dashboard e Transacoes
-- [ ] **CMP-02**: Hook compartilhado pra logica de filtro
+- [x] **CMP-01**: Componentes reutilizaveis entre Dashboard e Transacoes ✓
+- [x] **CMP-02**: Hook compartilhado pra logica de filtro ✓
 
 ## v2 Requirements
 
@@ -65,17 +65,17 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | TOG-01 | Phase 2 | Pending |
-| TOG-02 | Phase 1 | Pending |
+| TOG-02 | Phase 1 | Complete |
 | TOG-03 | Phase 2 | Pending |
-| TOG-04 | Phase 1 | Pending |
+| TOG-04 | Phase 1 | Complete |
 | TAB-01 | Phase 3 | Pending |
 | TAB-02 | Phase 3 | Pending |
 | TAB-03 | Phase 3 | Pending |
-| LAY-01 | Phase 1 | Pending |
-| LAY-02 | Phase 1 | Pending |
+| LAY-01 | Phase 1 | Complete |
+| LAY-02 | Phase 1 | Complete |
 | FRM-01 | Phase 2 | Pending |
-| CMP-01 | Phase 1 | Pending |
-| CMP-02 | Phase 1 | Pending |
+| CMP-01 | Phase 1 | Complete |
+| CMP-02 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 12 total
@@ -84,4 +84,4 @@
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-01-31 after roadmap creation*
+*Last updated: 2026-02-01 after Phase 1 completion*

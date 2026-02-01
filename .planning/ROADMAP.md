@@ -6,7 +6,7 @@ Migrar de duas colunas para lista unica com toggle inline de status e filtro por
 
 ## Phases
 
-- [ ] **Phase 1: Componentes & Layout** - Extrair componentes reutilizaveis, lista unica, touch targets 44px
+- [x] **Phase 1: Componentes & Layout** - Extrair componentes reutilizaveis, lista unica, touch targets 44px ✓
 - [ ] **Phase 2: Toggle & Form** - Toggle inline com optimistic updates, toggle no formulario
 - [ ] **Phase 3: Filter Tabs** - Tabs Todos/Pendentes/Pagos com contadores
 
@@ -25,10 +25,10 @@ Migrar de duas colunas para lista unica com toggle inline de status e filtro por
 **Plans**: 4 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — StatusToggleButton + TransactionCard (Wave 1)
-- [ ] 01-02-PLAN.md — useTransactionFilters hook + TransactionFilters (Wave 1)
-- [ ] 01-03-PLAN.md — TransactionsList refactor + Dashboard integration (Wave 2)
-- [ ] 01-04-PLAN.md — Transacoes page integration (Wave 2)
+- [x] 01-01-PLAN.md — StatusToggleButton + TransactionCard (Wave 1) ✓
+- [x] 01-02-PLAN.md — useTransactionFilters hook + TransactionFilters (Wave 1) ✓
+- [x] 01-03-PLAN.md — TransactionsList refactor + Dashboard integration (Wave 2) ✓
+- [x] 01-04-PLAN.md — Transacoes page integration (Wave 2) ✓
 
 ### Phase 2: Toggle & Form
 **Goal**: Toggle funcional com feedback imediato e integracao no formulario
@@ -62,6 +62,6 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Componentes & Layout | 0/4 | Planned | - |
+| 1. Componentes & Layout | 4/4 | ✓ Complete | 2026-02-01 |
 | 2. Toggle & Form | 0/TBD | Not started | - |
 | 3. Filter Tabs | 0/TBD | Not started | - |
