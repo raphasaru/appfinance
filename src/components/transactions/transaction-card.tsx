@@ -20,9 +20,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   LucideIcon,
-  Check,
   Clock,
-  Loader2,
   ChevronDown,
   AlertTriangle,
 } from "lucide-react";
@@ -35,6 +33,7 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Checkbox } from "@/components/ui/checkbox";
+import { StatusToggleButton } from "@/components/transactions/status-toggle-button";
 
 type Transaction = Tables<"transactions"> & {
   transaction_items?: Array<{
@@ -119,8 +118,7 @@ export function TransactionCard({
   const PaymentIcon = getPaymentMethodIcon(paymentMethod);
   const paymentColor = getPaymentMethodColor(paymentMethod);
 
-  const handleToggleStatus = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleToggleStatus = async () => {
     try {
       if (isCompleted) {
         await uncompleteMutation.mutateAsync(transaction.id);
@@ -159,23 +157,11 @@ export function TransactionCard({
           className="flex-shrink-0"
         />
       ) : (
-        /* Status Toggle Button */
-        <button
-          onClick={handleToggleStatus}
+        <StatusToggleButton
+          status={transaction.status ?? "planned"}
+          onToggle={handleToggleStatus}
           disabled={isToggling}
-          className={cn(
-            "flex-shrink-0 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-colors",
-            isCompleted
-              ? "bg-income border-income text-white"
-              : "border-muted-foreground/40 hover:border-primary hover:bg-primary/10"
-          )}
-        >
-          {isToggling ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : isCompleted ? (
-            <Check className="h-3 w-3" />
-          ) : null}
-        </button>
+        />
       )}
 
       {/* Category Icon */}
