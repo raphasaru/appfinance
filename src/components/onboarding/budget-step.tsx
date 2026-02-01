@@ -1,13 +1,37 @@
 "use client"
 
-import { PieChart, Loader2 } from "lucide-react"
+import { useState } from "react"
+import { PieChart, Loader2, ChevronRight } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { useCategoryBudgets } from "@/lib/hooks/use-category-budgets"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet"
+import { useCategoryBudgets, useUpsertCategoryBudget } from "@/lib/hooks/use-category-budgets"
 import { categoryLabels, ExpenseCategory } from "@/lib/utils/categories"
 import { formatCurrency } from "@/lib/utils/currency"
 import { Tables } from "@/lib/database.types"
+import { toast } from "sonner"
 
 type CategoryBudget = Tables<"category_budgets">
+
+const ALL_CATEGORIES: ExpenseCategory[] = [
+  "fixed_housing",
+  "fixed_utilities",
+  "fixed_subscriptions",
+  "fixed_personal",
+  "fixed_taxes",
+  "variable_credit",
+  "variable_food",
+  "variable_transport",
+  "variable_other",
+]
 
 interface StepProps {
   onNext: () => void
@@ -15,6 +39,13 @@ interface StepProps {
 
 export function BudgetStep({ onNext }: StepProps) {
   const { data: budgets, isLoading } = useCategoryBudgets()
+  const [editingCategory, setEditingCategory] = useState<{
+    category: ExpenseCategory
+    label: string
+    budget: number
+  } | null>(null)
+  const [editValue, setEditValue] = useState("")
+  const upsertBudget = useUpsertCategoryBudget()
 
   const totalBudget = budgets?.reduce((sum: number, b: CategoryBudget) => sum + b.monthly_budget, 0) || 0
 
@@ -34,7 +65,7 @@ export function BudgetStep({ onNext }: StepProps) {
         <div className="flex justify-center py-4">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      ) : budgets && budgets.length > 0 ? (
+      ) : (
         <>
           <Card>
             <CardContent className="p-4 text-center">
@@ -47,42 +78,84 @@ export function BudgetStep({ onNext }: StepProps) {
           </Card>
 
           <div className="space-y-2">
-            {budgets.slice(0, 5).map((budget: CategoryBudget) => (
-              <div
-                key={budget.id}
-                className="flex items-center justify-between p-3 rounded-lg border"
-              >
-                <span className="text-sm">
-                  {categoryLabels[budget.category as ExpenseCategory] || budget.category}
-                </span>
-                <span className="font-medium">
-                  {formatCurrency(budget.monthly_budget)}
-                </span>
-              </div>
-            ))}
-            {budgets.length > 5 && (
-              <p className="text-center text-sm text-muted-foreground">
-                +{budgets.length - 5} categorias
-              </p>
-            )}
+            {ALL_CATEGORIES.map((cat) => {
+              const budget = budgets?.find((b: CategoryBudget) => b.category === cat)
+              const amount = budget?.monthly_budget || 0
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setEditingCategory({
+                      category: cat,
+                      label: categoryLabels[cat],
+                      budget: amount,
+                    })
+                    setEditValue(amount > 0 ? String(amount) : "")
+                  }}
+                  className="flex items-center justify-between w-full p-3 rounded-lg border hover:bg-accent transition-colors text-left"
+                >
+                  <span className="text-sm">{categoryLabels[cat]}</span>
+                  <div className="flex items-center gap-2">
+                    <span className={amount > 0 ? "font-medium" : "text-muted-foreground"}>
+                      {amount > 0 ? formatCurrency(amount) : "Não definido"}
+                    </span>
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </>
-      ) : (
-        <Card className="border-dashed">
-          <CardContent className="p-6 text-center">
-            <p className="text-sm text-muted-foreground mb-2">
-              Nenhum orçamento definido
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Você pode configurar isso depois em Orçamento
-            </p>
-          </CardContent>
-        </Card>
       )}
 
       <p className="text-center text-sm text-muted-foreground">
-        Você pode ajustar os valores a qualquer momento
+        Clique em uma categoria para definir o orçamento
       </p>
+
+      <Sheet open={!!editingCategory} onOpenChange={(open) => !open && setEditingCategory(null)}>
+        <SheetContent side="bottom" className="h-auto">
+          <SheetHeader>
+            <SheetTitle>{editingCategory?.label}</SheetTitle>
+            <SheetDescription>
+              Defina o orçamento mensal para esta categoria
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-4 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="budget">Orçamento mensal (R$)</Label>
+              <Input
+                id="budget"
+                type="number"
+                step="0.01"
+                value={editValue}
+                onChange={(e) => setEditValue(e.target.value)}
+                placeholder="0,00"
+                autoFocus
+              />
+            </div>
+            <Button
+              className="w-full"
+              disabled={upsertBudget.isPending}
+              onClick={async () => {
+                if (!editingCategory) return
+                try {
+                  await upsertBudget.mutateAsync([{
+                    category: editingCategory.category,
+                    monthly_budget: parseFloat(editValue) || 0,
+                  }])
+                  toast.success("Orçamento atualizado")
+                  setEditingCategory(null)
+                } catch {
+                  toast.error("Erro ao atualizar orçamento")
+                }
+              }}
+            >
+              {upsertBudget.isPending ? "Salvando..." : "Salvar"}
+            </Button>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
