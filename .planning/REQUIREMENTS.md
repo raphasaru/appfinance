@@ -7,16 +7,16 @@
 
 ### Toggle de Status
 
-- [ ] **TOG-01**: Toggle em cada card de transacao pra marcar pago/pendente
+- [x] **TOG-01**: Toggle em cada card de transacao pra marcar pago/pendente ✓
 - [x] **TOG-02**: Touch target minimo 44x44px no toggle ✓
-- [ ] **TOG-03**: Optimistic update — feedback visual imediato antes da resposta do servidor
+- [x] **TOG-03**: Optimistic update — feedback visual imediato antes da resposta do servidor ✓
 - [x] **TOG-04**: Badge/icone diferenciando status (check verde = pago) ✓
 
 ### Filtro por Tabs
 
-- [ ] **TAB-01**: Tabs no topo: Todos | Pendentes | Pagos
-- [ ] **TAB-02**: Contador de itens em cada tab
-- [ ] **TAB-03**: Tab "Todos" como padrao ao abrir
+- [x] **TAB-01**: Tabs no topo: Todos | Pendentes | Pagos ✓
+- [x] **TAB-02**: Contador de itens em cada tab ✓
+- [x] **TAB-03**: Tab "Todos" como padrao ao abrir ✓
 
 ### Layout
 
@@ -25,7 +25,7 @@
 
 ### Formulario
 
-- [ ] **FRM-01**: Toggle de status no formulario de nova transacao
+- [x] **FRM-01**: Toggle de status no formulario de nova transacao ✓
 
 ### Componentes
 
@@ -64,16 +64,16 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TOG-01 | Phase 2 | Pending |
+| TOG-01 | Phase 2 | Complete |
 | TOG-02 | Phase 1 | Complete |
-| TOG-03 | Phase 2 | Pending |
+| TOG-03 | Phase 2 | Complete |
 | TOG-04 | Phase 1 | Complete |
-| TAB-01 | Phase 3 | Pending |
-| TAB-02 | Phase 3 | Pending |
-| TAB-03 | Phase 3 | Pending |
+| TAB-01 | Phase 3 | Complete |
+| TAB-02 | Phase 3 | Complete |
+| TAB-03 | Phase 3 | Complete |
 | LAY-01 | Phase 1 | Complete |
 | LAY-02 | Phase 1 | Complete |
-| FRM-01 | Phase 2 | Pending |
+| FRM-01 | Phase 2 | Complete |
 | CMP-01 | Phase 1 | Complete |
 | CMP-02 | Phase 1 | Complete |
 
@@ -84,4 +84,4 @@
 
 ---
 *Requirements defined: 2026-01-31*
-*Last updated: 2026-02-01 after Phase 1 completion*
+*Last updated: 2026-02-01 after Phase 3 completion*

@@ -8,7 +8,7 @@ Migrar de duas colunas para lista unica com toggle inline de status e filtro por
 
 - [x] **Phase 1: Componentes & Layout** - Extrair componentes reutilizaveis, lista unica, touch targets 44px ✓
 - [x] **Phase 2: Toggle & Form** - Toggle inline com optimistic updates, toggle no formulario ✓
-- [ ] **Phase 3: Filter Tabs** - Tabs Todos/Pendentes/Pagos com contadores
+- [x] **Phase 3: Filter Tabs** - Tabs Todos/Pendentes/Pagos com contadores ✓
 
 ## Phase Details
 
@@ -54,10 +54,10 @@ Plans:
   2. Cada tab mostra contador de itens
   3. Tab "Todos" selecionada por padrao ao abrir
   4. Filtro funciona instantaneamente (client-side)
-**Plans**: TBD
+**Plans**: 0 plans (completed during Phase 1)
 
 Plans:
-- [ ] 03-01: TBD
+- (Filter infrastructure built in Phase 1 plans 01-02)
 
 ## Progress
 
@@ -65,4 +65,4 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Componentes & Layout | 4/4 | ✓ Complete | 2026-02-01 |
 | 2. Toggle & Form | 2/2 | ✓ Complete | 2026-02-01 |
-| 3. Filter Tabs | 0/TBD | Not started | - |
+| 3. Filter Tabs | 0/0 | ✓ Complete | 2026-02-01 |
