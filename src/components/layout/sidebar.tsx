@@ -65,7 +65,7 @@ export function Sidebar({ userName }: SidebarProps) {
           <Wallet className="h-5 w-5 text-primary-foreground" />
         </div>
         <div className="flex flex-col">
-          <span className="font-semibold text-base tracking-tight">Meu Bolso</span>
+          <span className="font-semibold text-base tracking-tight">KYN App</span>
           <span className="text-[11px] text-muted-foreground font-medium tracking-wide uppercase">
             Finanças Pessoais
           </span>

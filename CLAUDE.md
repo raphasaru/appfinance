@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Meu Bolso** - A PWA for personal financial management built with Next.js 15 and Supabase. The app helps users track income/expenses, manage budgets, investments, and integrates with WhatsApp for quick transaction logging via AI.
+**KYN App** - A PWA for personal financial management built with Next.js 15 and Supabase. The app helps users track income/expenses, manage budgets, investments, and integrates with WhatsApp for quick transaction logging via AI.
 
 ## Tech Stack
 

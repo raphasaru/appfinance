@@ -1,6 +1,6 @@
 # Technology Stack: Transaction Status UX
 
-**Project:** Meu Bolso - Transaction Status Toggle & Tab Filtering
+**Project:** KYN App - Transaction Status Toggle & Tab Filtering
 **Researched:** 2026-01-31
 **Dimension:** Stack (focused on UX components for status toggles/filters)
 

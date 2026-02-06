@@ -1,4 +1,4 @@
-# Meu Bolso - Roadmap
+# KYN App - Roadmap
 
 ## ✅ Fase 3 - Transações Avançadas (Concluída)
 

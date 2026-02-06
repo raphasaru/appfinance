@@ -14,13 +14,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Meu Bolso",
+  title: "KYN App",
   description: "Gestão financeira pessoal simples e eficiente",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Meu Bolso",
+    title: "KYN App",
   },
   formatDetection: {
     telephone: false,

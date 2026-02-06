@@ -3,8 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Termos de Uso | Meu Bolso",
-  description: "Termos e condições de uso do Meu Bolso",
+  title: "Termos de Uso | KYN App",
+  description: "Termos e condições de uso do KYN App",
 };
 
 export default function TermosPage() {
@@ -27,16 +27,16 @@ export default function TermosPage() {
           <section>
             <h2 className="text-xl font-semibold mb-3">1. Definições</h2>
             <p className="text-muted-foreground leading-relaxed">
-              <strong>Meu Bolso</strong> é uma plataforma de gestão financeira pessoal que permite o registro e acompanhamento de receitas, despesas e orçamentos.
+              <strong>KYN App</strong> é uma plataforma de gestão financeira pessoal que permite o registro e acompanhamento de receitas, despesas e orçamentos.
               <strong> Usuário</strong> é toda pessoa física que se cadastra e utiliza os serviços da plataforma.
-              <strong> Serviço</strong> compreende todas as funcionalidades oferecidas pelo Meu Bolso, incluindo integração com WhatsApp para registro de transações.
+              <strong> Serviço</strong> compreende todas as funcionalidades oferecidas pelo KYN App, incluindo integração com WhatsApp para registro de transações.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">2. Cadastro e Conta</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Para utilizar o Meu Bolso, você deve criar uma conta com informações verdadeiras e mantê-las atualizadas. Você é responsável por manter a confidencialidade de suas credenciais de acesso. Caso identifique uso não autorizado, notifique-nos imediatamente.
+              Para utilizar o KYN App, você deve criar uma conta com informações verdadeiras e mantê-las atualizadas. Você é responsável por manter a confidencialidade de suas credenciais de acesso. Caso identifique uso não autorizado, notifique-nos imediatamente.
             </p>
           </section>
 
@@ -50,7 +50,7 @@ export default function TermosPage() {
           <section>
             <h2 className="text-xl font-semibold mb-3">4. Pagamentos e Assinatura</h2>
             <p className="text-muted-foreground leading-relaxed">
-              O Meu Bolso oferece planos gratuitos e pagos. Os pagamentos são processados via Stripe de forma segura. Assinaturas são renovadas automaticamente até que sejam canceladas. O cancelamento pode ser feito a qualquer momento, mantendo o acesso até o fim do período pago.
+              O KYN App oferece planos gratuitos e pagos. Os pagamentos são processados via Stripe de forma segura. Assinaturas são renovadas automaticamente até que sejam canceladas. O cancelamento pode ser feito a qualquer momento, mantendo o acesso até o fim do período pago.
             </p>
           </section>
 
@@ -64,14 +64,14 @@ export default function TermosPage() {
           <section>
             <h2 className="text-xl font-semibold mb-3">6. Propriedade Intelectual</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Todo o conteúdo do Meu Bolso, incluindo marca, design e código, é protegido por direitos autorais. Os dados inseridos pelo usuário permanecem de sua propriedade. Ao usar o serviço, você concede ao Meu Bolso licença para processar seus dados conforme necessário para a prestação do serviço.
+              Todo o conteúdo do KYN App, incluindo marca, design e código, é protegido por direitos autorais. Os dados inseridos pelo usuário permanecem de sua propriedade. Ao usar o serviço, você concede ao KYN App licença para processar seus dados conforme necessário para a prestação do serviço.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">7. Limitação de Responsabilidade</h2>
             <p className="text-muted-foreground leading-relaxed">
-              O Meu Bolso é uma ferramenta de organização e não oferece consultoria financeira. Não nos responsabilizamos por decisões financeiras tomadas com base nas informações da plataforma. O serviço é fornecido "como está", sem garantias de disponibilidade ininterrupta.
+              O KYN App é uma ferramenta de organização e não oferece consultoria financeira. Não nos responsabilizamos por decisões financeiras tomadas com base nas informações da plataforma. O serviço é fornecido "como está", sem garantias de disponibilidade ininterrupta.
             </p>
           </section>
 
@@ -106,7 +106,7 @@ export default function TermosPage() {
 
         <div className="mt-12 pt-8 border-t">
           <p className="text-sm text-muted-foreground">
-            Ao usar o Meu Bolso, você concorda com estes termos de uso e nossa{" "}
+            Ao usar o KYN App, você concorda com estes termos de uso e nossa{" "}
             <Link href="/privacidade" className="text-primary hover:underline">
               Política de Privacidade
             </Link>

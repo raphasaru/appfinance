@@ -13,7 +13,7 @@ export function WelcomeStep({ onNext }: StepProps) {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
           <Wallet className="h-8 w-8 text-primary" />
         </div>
-        <h1 className="text-2xl font-bold">Bem-vindo ao Meu Bolso!</h1>
+        <h1 className="text-2xl font-bold">Bem-vindo ao KYN App!</h1>
         <p className="text-muted-foreground">
           Vamos configurar sua conta em alguns passos rápidos
         </p>

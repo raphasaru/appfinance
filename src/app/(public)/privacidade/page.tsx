@@ -3,8 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Política de Privacidade | Meu Bolso",
-  description: "Política de privacidade e proteção de dados do Meu Bolso",
+  title: "Política de Privacidade | KYN App",
+  description: "Política de privacidade e proteção de dados do KYN App",
 };
 
 export default function PrivacidadePage() {
@@ -26,7 +26,7 @@ export default function PrivacidadePage() {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-6">
           <section>
             <p className="text-muted-foreground leading-relaxed">
-              Esta Política de Privacidade descreve como o Meu Bolso coleta, usa e protege seus dados pessoais em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
+              Esta Política de Privacidade descreve como o KYN App coleta, usa e protege seus dados pessoais em conformidade com a Lei Geral de Proteção de Dados (LGPD - Lei nº 13.709/2018).
             </p>
           </section>
 
@@ -143,7 +143,7 @@ export default function PrivacidadePage() {
 
         <div className="mt-12 pt-8 border-t">
           <p className="text-sm text-muted-foreground">
-            Ao usar o Meu Bolso, você concorda com esta política de privacidade e nossos{" "}
+            Ao usar o KYN App, você concorda com esta política de privacidade e nossos{" "}
             <Link href="/termos" className="text-primary hover:underline">
               Termos de Uso
             </Link>

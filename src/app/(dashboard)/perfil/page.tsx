@@ -199,7 +199,7 @@ export default function PerfilPage() {
 
           {/* App Version */}
           <p className="text-center text-xs text-muted-foreground">
-            Meu Bolso v1.0.0
+            KYN App v1.0.0
           </p>
         </div>
       </div>

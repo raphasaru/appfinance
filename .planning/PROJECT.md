@@ -1,4 +1,4 @@
-# Meu Bolso — UX Transacoes v2
+# KYN App — UX Transacoes v2
 
 ## What This Is
 

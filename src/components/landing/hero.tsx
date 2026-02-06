@@ -57,10 +57,10 @@ export function Hero() {
           <div className="bg-card border rounded-2xl shadow-xl overflow-hidden">
             <div className="bg-primary px-4 py-3 flex items-center gap-3">
               <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center">
-                <span className="text-white font-semibold">MB</span>
+                <span className="text-white font-semibold">KA</span>
               </div>
               <div>
-                <p className="text-white font-medium text-sm">Meu Bolso</p>
+                <p className="text-white font-medium text-sm">KYN App</p>
                 <p className="text-white/70 text-xs">online</p>
               </div>
             </div>

@@ -1,4 +1,4 @@
-# Relatório de Testes - Meu Bolso
+# Relatório de Testes - KYN App
 
 **Data:** 2026-01-29
 **Total de Testes:** 165 passando

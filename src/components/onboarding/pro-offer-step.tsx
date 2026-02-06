@@ -45,7 +45,7 @@ export function ProOfferStep({ onNext }: StepProps) {
           </div>
           <h2 className="text-xl font-semibold">Você já é Pro!</h2>
           <p className="text-sm text-muted-foreground">
-            Aproveite todos os recursos premium do Meu Bolso
+            Aproveite todos os recursos premium do KYN App
           </p>
         </div>
 

@@ -10,7 +10,7 @@ export function Footer() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <Wallet className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="font-semibold">Meu Bolso</span>
+            <span className="font-semibold">KYN App</span>
           </div>
 
           <nav className="flex flex-wrap justify-center gap-6 text-sm">
@@ -35,7 +35,7 @@ export function Footer() {
           </nav>
 
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} Meu Bolso
+            © {new Date().getFullYear()} KYN App
           </p>
         </div>
       </div>

@@ -1,11 +1,11 @@
-# UI Desktop Redesign - Meu Bolso
+# UI Desktop Redesign - KYN App
 
 **Data**: 2026-01-17
 **Status**: Aprovado
 
 ## Resumo
 
-Redesign da interface do Meu Bolso para ter uma experiência desktop dedicada, mantendo responsividade com mobile. Inclui correção de bug no formulário de edição de transações.
+Redesign da interface do KYN App para ter uma experiência desktop dedicada, mantendo responsividade com mobile. Inclui correção de bug no formulário de edição de transações.
 
 ## Decisões de Design
 
@@ -39,7 +39,7 @@ Redesign da interface do Meu Bolso para ter uma experiência desktop dedicada, m
 ```
 ┌──────────────┐
 │  Logo        │
-│  Meu Bolso   │
+│  KYN App   │
 ├──────────────┤
 │  Início      │
 │  Transações  │

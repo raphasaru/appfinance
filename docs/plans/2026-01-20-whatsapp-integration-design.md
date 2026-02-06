@@ -1,4 +1,4 @@
-# Integração WhatsApp - Meu Bolso
+# Integração WhatsApp - KYN App
 
 ## Resumo
 
@@ -127,7 +127,7 @@ Retorne JSON:
 `;
 ```
 
-## Mudanças no App Web (Meu Bolso)
+## Mudanças no App Web (KYN App)
 
 Nova página: `/configuracoes/whatsapp`
 - Campo para cadastrar número de telefone

@@ -1,6 +1,6 @@
 {
-  "name": "Meu Bolso",
-  "short_name": "Meu Bolso",
+  "name": "KYN App",
+  "short_name": "KYN App",
   "description": "Gestão financeira pessoal simples e eficiente",
   "start_url": "/",
   "display": "standalone",

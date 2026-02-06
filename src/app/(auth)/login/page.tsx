@@ -97,7 +97,7 @@ export default function LoginPage() {
         <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary">
           <Wallet className="h-6 w-6 text-primary-foreground" />
         </div>
-        <CardTitle className="text-2xl">Meu Bolso</CardTitle>
+        <CardTitle className="text-2xl">KYN App</CardTitle>
         <CardDescription>Entre na sua conta</CardDescription>
       </CardHeader>
       <CardContent>

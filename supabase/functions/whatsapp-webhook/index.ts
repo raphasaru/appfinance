@@ -433,12 +433,12 @@ Deno.serve(async (req: Request) => {
           "💰 _\"recebi 3000 de salário\"_\n" +
           "🛒 _\"mercado 200, padaria 30, farmácia 45\"_\n" +
           "🎤 _Envie um áudio descrevendo a transação_\n\n" +
-          "As transações serão lançadas automaticamente no app Meu Bolso."
+          "As transações serão lançadas automaticamente no app KYN App."
         );
       } else {
         await sendWhatsAppMessage(
           senderId,
-          "❌ " + result.message + "\n\nAcesse o app Meu Bolso para gerar um novo código."
+          "❌ " + result.message + "\n\nAcesse o app KYN App para gerar um novo código."
         );
       }
 

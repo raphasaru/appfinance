@@ -1,6 +1,6 @@
 # Project Research Summary
 
-**Project:** Meu Bolso - Transaction Status Toggle & Filter UX
+**Project:** KYN App - Transaction Status Toggle & Filter UX
 **Domain:** Personal finance PWA - transaction management
 **Researched:** 2026-01-31
 **Confidence:** HIGH

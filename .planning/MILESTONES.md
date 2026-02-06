@@ -1,4 +1,4 @@
-# Project Milestones: Meu Bolso
+# Project Milestones: KYN App
 
 ## v1.0 UX Transacoes v2 (Shipped: 2026-02-01)
 

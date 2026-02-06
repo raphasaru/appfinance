@@ -1,6 +1,6 @@
-# Roadmap de Funcionalidades - Meu Bolso
+# Roadmap de Funcionalidades - KYN App
 
-> Documento de planejamento para desenvolvimento futuro do aplicativo Meu Bolso.
+> Documento de planejamento para desenvolvimento futuro do aplicativo KYN App.
 > Data: 26 de Janeiro de 2026
 > Última atualização: 29 de Janeiro de 2026
 
