@@ -13,6 +13,12 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -23,23 +29,28 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   useRecurringTemplates,
   useCreateRecurringTemplate,
+  useUpdateRecurringTemplate,
   useToggleRecurringTemplate,
   useDeleteRecurringTemplate,
   useGenerateMonthlyTransactions,
 } from "@/lib/hooks/use-recurring";
 import { formatCurrency, parseCurrency, formatCurrencyInput } from "@/lib/utils/currency";
 import { categoryLabels, getCategoryLabel, ExpenseCategory } from "@/lib/utils/categories";
-import { Plus, Trash2, RefreshCw, Loader2, Calendar, Download } from "lucide-react";
+import { Plus, Trash2, RefreshCw, Loader2, Calendar, Download, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/lib/hooks/use-media-query";
 import { Enums } from "@/lib/database.types";
 import { initialTemplates } from "./seed-data";
 
 export default function RecorrentesPage() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   const [seeding, setSeeding] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const { data: templates, isLoading } = useRecurringTemplates();
   const createMutation = useCreateRecurringTemplate();
+  const updateMutation = useUpdateRecurringTemplate();
   const toggleMutation = useToggleRecurringTemplate();
   const deleteMutation = useDeleteRecurringTemplate();
   const generateMutation = useGenerateMonthlyTransactions();
@@ -52,6 +63,29 @@ export default function RecorrentesPage() {
     day_of_month: "1",
   });
 
+  const resetForm = () => {
+    setEditingId(null);
+    setFormData({
+      description: "",
+      amount: "",
+      type: "expense",
+      category: "",
+      day_of_month: "1",
+    });
+  };
+
+  const handleEdit = (template: NonNullable<typeof templates>[number]) => {
+    setEditingId(template.id);
+    setFormData({
+      description: template.description,
+      amount: formatCurrency(Number(template.amount)).replace("R$\u00a0", ""),
+      type: template.type as "income" | "expense",
+      category: template.category || "",
+      day_of_month: String(template.day_of_month),
+    });
+    setFormOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -60,25 +94,26 @@ export default function RecorrentesPage() {
       return;
     }
 
+    const payload = {
+      description: formData.description,
+      amount: parseCurrency(formData.amount),
+      type: formData.type,
+      category: formData.type === "expense" ? (formData.category as ExpenseCategory) : null,
+      day_of_month: parseInt(formData.day_of_month),
+    };
+
     try {
-      await createMutation.mutateAsync({
-        description: formData.description,
-        amount: parseCurrency(formData.amount),
-        type: formData.type,
-        category: formData.type === "expense" ? (formData.category as ExpenseCategory) : null,
-        day_of_month: parseInt(formData.day_of_month),
-      });
-      toast.success("Template criado!");
+      if (editingId) {
+        await updateMutation.mutateAsync({ id: editingId, ...payload });
+        toast.success("Template atualizado!");
+      } else {
+        await createMutation.mutateAsync(payload);
+        toast.success("Template criado!");
+      }
       setFormOpen(false);
-      setFormData({
-        description: "",
-        amount: "",
-        type: "expense",
-        category: "",
-        day_of_month: "1",
-      });
+      resetForm();
     } catch {
-      toast.error("Erro ao criar template");
+      toast.error(editingId ? "Erro ao atualizar template" : "Erro ao criar template");
     }
   };
 
@@ -191,7 +226,10 @@ export default function RecorrentesPage() {
                       checked={template.is_active ?? true}
                       onCheckedChange={() => handleToggle(template.id, template.is_active ?? true)}
                     />
-                    <div className={cn("flex-1 min-w-0", !template.is_active && "opacity-50")}>
+                    <button
+                      className={cn("flex-1 min-w-0 text-left", !template.is_active && "opacity-50")}
+                      onClick={() => handleEdit(template)}
+                    >
                       <div className="flex items-center justify-between">
                         <p className="font-medium truncate">{template.description}</p>
                         <span className="font-semibold currency text-income">
@@ -202,7 +240,15 @@ export default function RecorrentesPage() {
                         <Calendar className="h-3 w-3" />
                         <span>Dia {template.day_of_month}</span>
                       </div>
-                    </div>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="flex-shrink-0 h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleEdit(template)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -227,7 +273,10 @@ export default function RecorrentesPage() {
                       checked={template.is_active ?? true}
                       onCheckedChange={() => handleToggle(template.id, template.is_active ?? true)}
                     />
-                    <div className={cn("flex-1 min-w-0", !template.is_active && "opacity-50")}>
+                    <button
+                      className={cn("flex-1 min-w-0 text-left", !template.is_active && "opacity-50")}
+                      onClick={() => handleEdit(template)}
+                    >
                       <div className="flex items-center justify-between">
                         <p className="font-medium truncate">{template.description}</p>
                         <span className="font-semibold currency text-expense">
@@ -239,7 +288,15 @@ export default function RecorrentesPage() {
                         <span>·</span>
                         <span>Dia {template.day_of_month}</span>
                       </div>
-                    </div>
+                    </button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="flex-shrink-0 h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => handleEdit(template)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -266,17 +323,14 @@ export default function RecorrentesPage() {
       <Button
         size="lg"
         className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg md:bottom-8"
-        onClick={() => setFormOpen(true)}
+        onClick={() => { resetForm(); setFormOpen(true); }}
       >
         <Plus className="h-6 w-6" />
       </Button>
 
-      <Sheet open={formOpen} onOpenChange={setFormOpen}>
-        <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
-          <SheetHeader className="text-left">
-            <SheetTitle>Novo template recorrente</SheetTitle>
-          </SheetHeader>
-
+      {(() => {
+        const title = editingId ? "Editar template recorrente" : "Novo template recorrente";
+        const formContent = (
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <Tabs
               value={formData.type}
@@ -352,16 +406,40 @@ export default function RecorrentesPage() {
               </Select>
             </div>
 
-            <Button type="submit" className="w-full h-12" disabled={createMutation.isPending}>
-              {createMutation.isPending ? (
+            <Button type="submit" className="w-full h-12" disabled={createMutation.isPending || updateMutation.isPending}>
+              {(createMutation.isPending || updateMutation.isPending) ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Adicionar"
+                editingId ? "Salvar" : "Adicionar"
               )}
             </Button>
           </form>
-        </SheetContent>
-      </Sheet>
+        );
+
+        if (isDesktop) {
+          return (
+            <Dialog open={formOpen} onOpenChange={setFormOpen}>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader>
+                  <DialogTitle>{title}</DialogTitle>
+                </DialogHeader>
+                {formContent}
+              </DialogContent>
+            </Dialog>
+          );
+        }
+
+        return (
+          <Sheet open={formOpen} onOpenChange={setFormOpen}>
+            <SheetContent side="bottom" className="h-[80vh] rounded-t-xl">
+              <SheetHeader className="text-left">
+                <SheetTitle>{title}</SheetTitle>
+              </SheetHeader>
+              {formContent}
+            </SheetContent>
+          </Sheet>
+        );
+      })()}
     </div>
   );
 }

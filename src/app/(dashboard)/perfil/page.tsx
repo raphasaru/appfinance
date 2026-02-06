@@ -8,15 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  User,
-  Bell,
-  Download,
-  Shield,
   ChevronRight,
   LogOut,
   Moon,
   Camera,
   MessageCircle,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -28,34 +25,16 @@ interface UserProfile {
 
 const settingsItems = [
   {
-    icon: User,
-    label: "Dados Pessoais",
-    description: "Nome, email e telefone",
-    href: "/perfil/dados",
-  },
-  {
     icon: MessageCircle,
     label: "WhatsApp",
     description: "Lançar transações por mensagem",
     href: "/configuracoes/whatsapp",
   },
   {
-    icon: Bell,
-    label: "Notificações",
-    description: "Alertas e lembretes",
-    href: "/perfil/notificacoes",
-  },
-  {
-    icon: Download,
-    label: "Exportar Dados",
-    description: "Baixar seus dados",
-    href: "/perfil/exportar",
-  },
-  {
-    icon: Shield,
-    label: "Segurança",
-    description: "Senha e autenticação",
-    href: "/perfil/seguranca",
+    icon: CreditCard,
+    label: "Assinatura",
+    description: "Gerenciar seu plano",
+    href: "/configuracoes/assinatura",
   },
 ];
 

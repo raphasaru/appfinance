@@ -68,6 +68,28 @@ export function useToggleRecurringTemplate() {
   });
 }
 
+export function useUpdateRecurringTemplate() {
+  const queryClient = useQueryClient();
+  const supabase = createClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string } & Partial<Omit<TablesInsert<"recurring_templates">, "user_id">>) => {
+      const { data, error } = await supabase
+        .from("recurring_templates")
+        .update(updates)
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recurring-templates"] });
+    },
+  });
+}
+
 export function useDeleteRecurringTemplate() {
   const queryClient = useQueryClient();
   const supabase = createClient();
