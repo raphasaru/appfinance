@@ -48,7 +48,7 @@ export function CardsStep({ onNext }: StepProps) {
         credit_limit: parseFloat(formData.credit_limit) || 0,
         due_day: parseInt(formData.due_day),
         closing_day: parseInt(formData.closing_day),
-      })
+      } as any)
       toast.success("Cartão adicionado")
       setFormData({ name: "", credit_limit: "", due_day: "", closing_day: "" })
       setSelectedBank("")

@@ -36,7 +36,7 @@ export default function DashboardPage() {
   // Sort filtered transactions by date descending
   const sortedTransactions = useMemo(() => {
     return [...filtered].sort((a, b) =>
-      new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
+      new Date(b.due_date + "T00:00:00").getTime() - new Date(a.due_date + "T00:00:00").getTime()
     );
   }, [filtered]);
 

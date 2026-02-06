@@ -113,10 +113,10 @@ export function BankAccountForm({
 
     try {
       if (isEditing && account) {
-        await updateMutation.mutateAsync({ id: account.id, ...payload });
+        await updateMutation.mutateAsync({ id: account.id, ...payload } as any);
         toast.success("Conta atualizada!");
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync(payload as any);
         toast.success("Conta criada!");
       }
       onOpenChange(false);

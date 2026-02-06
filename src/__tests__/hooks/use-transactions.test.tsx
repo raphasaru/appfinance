@@ -134,7 +134,7 @@ describe('useCreateTransaction', () => {
         amount: 100,
         type: 'expense',
         due_date: '2024-01-15',
-      })
+      } as any)
     })
 
     expect(mockSupabase.from).toHaveBeenCalledWith('transactions')
@@ -157,7 +157,7 @@ describe('useCreateTransaction', () => {
         amount: 100,
         type: 'expense',
         due_date: '2024-01-15',
-      })
+      } as any)
     ).rejects.toThrow(ErrorMessages.NOT_AUTHENTICATED)
   })
 })

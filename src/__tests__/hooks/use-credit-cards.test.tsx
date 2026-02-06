@@ -134,7 +134,7 @@ describe('useCreateCreditCard', () => {
         credit_limit: 3000,
         closing_day: 5,
         due_day: 15,
-      })
+      } as any)
     })
 
     expect(mockSupabase.from).toHaveBeenCalledWith('credit_cards')
@@ -183,7 +183,7 @@ describe('useUpdateCreditCard', () => {
       await result.current.mutateAsync({
         id: 'card-1',
         credit_limit: 8000,
-      })
+      } as any)
     })
 
     expect(mockQueryResult.update).toHaveBeenCalled()

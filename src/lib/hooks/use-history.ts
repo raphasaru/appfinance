@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 interface MonthlyData {
   month: string;
@@ -14,6 +15,7 @@ interface MonthlyData {
 
 export function useMonthlyHistory(months: number = 6) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
 
   return useQuery({
     queryKey: ["history", months],
@@ -35,8 +37,10 @@ export function useMonthlyHistory(months: number = 6) {
 
         if (error) throw error;
 
-        const summary = (data || []).reduce(
-          (acc, t) => {
+        const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
+        const summary = decrypted.reduce(
+          (acc, t: any) => {
             const amount = Number(t.amount);
             if (t.type === "income") {
               acc.income += amount;
@@ -70,6 +74,7 @@ interface CategoryData {
 
 export function useCategoryBreakdown(month: Date) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startOfMonth(month), "yyyy-MM-dd");
   const end = format(endOfMonth(month), "yyyy-MM-dd");
 
@@ -85,7 +90,9 @@ export function useCategoryBreakdown(month: Date) {
 
       if (error) throw error;
 
-      const categoryTotals = (data || []).reduce<Record<string, number>>((acc, t) => {
+      const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
+      const categoryTotals = decrypted.reduce<Record<string, number>>((acc, t: any) => {
         const cat = t.category || "variable_other";
         acc[cat] = (acc[cat] || 0) + Number(t.amount);
         return acc;

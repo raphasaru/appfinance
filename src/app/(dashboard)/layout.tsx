@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/header";
 import { BottomNav } from "@/components/layout/bottom-nav";
 import { Sidebar } from "@/components/layout/sidebar";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { CryptoProvider } from "@/components/providers/crypto-provider";
 
 export default async function DashboardLayout({
   children,
@@ -25,6 +26,7 @@ export default async function DashboardLayout({
 
   return (
     <QueryProvider>
+      <CryptoProvider>
       <div className="min-h-screen bg-background">
         {/* Desktop Sidebar */}
         <Sidebar userName={profile?.full_name} />
@@ -44,6 +46,7 @@ export default async function DashboardLayout({
         {/* Mobile Bottom Navigation */}
         <BottomNav />
       </div>
+      </CryptoProvider>
     </QueryProvider>
   );
 }

@@ -3,6 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { startOfMonth, endOfMonth, format } from "date-fns";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 interface MonthlySummary {
   totalIncome: number;
@@ -17,6 +18,7 @@ interface MonthlySummary {
 
 export function useMonthlySummary(month: Date) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startOfMonth(month), "yyyy-MM-dd");
   const end = format(endOfMonth(month), "yyyy-MM-dd");
 
@@ -31,8 +33,10 @@ export function useMonthlySummary(month: Date) {
 
       if (error) throw error;
 
-      const summary = (data || []).reduce(
-        (acc, t) => {
+      const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
+      const summary = decrypted.reduce(
+        (acc, t: any) => {
           const amount = Number(t.amount);
           if (t.type === "income") {
             acc.totalIncome += amount;
@@ -82,6 +86,7 @@ export function usePeriodSummary(
   filters?: PeriodFilters
 ) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startDate, "yyyy-MM-dd");
   const end = format(endDate, "yyyy-MM-dd");
 
@@ -102,8 +107,10 @@ export function usePeriodSummary(
 
       if (error) throw error;
 
+      const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
       // Apply filters client-side for flexibility with OR logic
-      let filtered = data || [];
+      let filtered = decrypted as any[];
 
       if (filters?.bankAccountIds?.length || filters?.creditCardIds?.length) {
         filtered = filtered.filter((t) => {
@@ -169,6 +176,7 @@ export function usePeriodCategorySpending(
   filters?: PeriodFilters
 ) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startDate, "yyyy-MM-dd");
   const end = format(endDate, "yyyy-MM-dd");
 
@@ -188,8 +196,10 @@ export function usePeriodCategorySpending(
 
       if (error) throw error;
 
+      const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
       // Apply filters client-side
-      let filtered = data || [];
+      let filtered = decrypted as any[];
 
       if (filters?.bankAccountIds?.length || filters?.creditCardIds?.length) {
         filtered = filtered.filter((t) => {

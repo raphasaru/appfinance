@@ -131,7 +131,7 @@ describe('useCreateBankAccount', () => {
         name: 'New Account',
         type: 'checking',
         balance: 500,
-      })
+      } as any)
     })
 
     expect(mockSupabase.from).toHaveBeenCalledWith('bank_accounts')
@@ -176,7 +176,7 @@ describe('useUpdateBankAccount', () => {
       await result.current.mutateAsync({
         id: 'acc-1',
         balance: 2000,
-      })
+      } as any)
     })
 
     expect(mockQueryResult.update).toHaveBeenCalled()

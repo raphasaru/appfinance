@@ -5,11 +5,13 @@ import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert } from "@/lib/database.types";
 import { format, startOfMonth, endOfMonth, getDaysInMonth } from "date-fns";
 import { ErrorMessages } from "@/lib/errors";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 type RecurringTemplate = Tables<"recurring_templates">;
 
 export function useRecurringTemplates() {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
 
   return useQuery({
     queryKey: ["recurring-templates"],
@@ -20,7 +22,7 @@ export function useRecurringTemplates() {
         .order("day_of_month", { ascending: true });
 
       if (error) throw error;
-      return data as RecurringTemplate[];
+      return decryptRows("recurring_templates", data as RecurringTemplate[]);
     },
   });
 }
@@ -28,15 +30,18 @@ export function useRecurringTemplates() {
 export function useCreateRecurringTemplate() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async (template: Omit<TablesInsert<"recurring_templates">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
+      const encrypted = await encryptRow("recurring_templates", { ...template, user_id: user.id } as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("recurring_templates")
-        .insert({ ...template, user_id: user.id })
+        .insert(encrypted)
         .select()
         .single();
 
@@ -71,12 +76,15 @@ export function useToggleRecurringTemplate() {
 export function useUpdateRecurringTemplate() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: { id: string } & Partial<Omit<TablesInsert<"recurring_templates">, "user_id">>) => {
+      const encrypted = await encryptRow("recurring_templates", updates as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("recurring_templates")
-        .update(updates)
+        .update(encrypted)
         .eq("id", id)
         .select()
         .single();
@@ -108,6 +116,7 @@ export function useDeleteRecurringTemplate() {
 export function useGenerateMonthlyTransactions() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow, decryptRows } = useCrypto();
 
   return useMutation({
     mutationFn: async (month: Date) => {
@@ -115,27 +124,34 @@ export function useGenerateMonthlyTransactions() {
       if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
       // Get active templates
-      const { data: templates, error: templatesError } = await supabase
+      const { data: templatesRaw, error: templatesError } = await supabase
         .from("recurring_templates")
         .select("*")
         .eq("is_active", true);
 
       if (templatesError) throw templatesError;
-      if (!templates || templates.length === 0) return { created: 0 };
+      if (!templatesRaw || templatesRaw.length === 0) return { created: 0 };
+
+      const templates = await decryptRows("recurring_templates", templatesRaw as Record<string, unknown>[]) as RecurringTemplate[];
 
       // Check existing transactions for this month
       const start = format(startOfMonth(month), "yyyy-MM-dd");
       const end = format(endOfMonth(month), "yyyy-MM-dd");
 
-      const { data: existing } = await supabase
+      const { data: existingRaw } = await supabase
         .from("transactions")
         .select("description, amount")
         .eq("is_recurring", true)
         .gte("due_date", start)
         .lte("due_date", end);
 
+      // Decrypt existing to compare descriptions
+      const existing = existingRaw
+        ? await decryptRows("transactions", existingRaw as Record<string, unknown>[])
+        : [];
+
       const existingSet = new Set(
-        (existing || []).map((t) => `${t.description}-${t.amount}`)
+        existing.map((t: any) => `${t.description}-${t.amount}`)
       );
 
       // Create transactions that don't exist yet
@@ -163,9 +179,13 @@ export function useGenerateMonthlyTransactions() {
         return { created: 0 };
       }
 
+      const encryptedTransactions = await Promise.all(
+        transactionsToCreate.map((t) => encryptRow("transactions", t as Record<string, unknown>))
+      );
+
       const { error } = await supabase
         .from("transactions")
-        .insert(transactionsToCreate);
+        .insert(encryptedTransactions);
 
       if (error) throw error;
 

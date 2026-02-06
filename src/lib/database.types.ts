@@ -16,7 +16,7 @@ export type Database = {
     Tables: {
       bank_accounts: {
         Row: {
-          balance: number
+          balance: string
           bank_name: string | null
           color: string | null
           created_at: string
@@ -27,7 +27,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          balance?: number
+          balance?: string
           bank_name?: string | null
           color?: string | null
           created_at?: string
@@ -38,7 +38,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          balance?: number
+          balance?: string
           bank_name?: string | null
           color?: string | null
           created_at?: string
@@ -55,7 +55,7 @@ export type Database = {
           category: Database["public"]["Enums"]["expense_category"]
           created_at: string
           id: string
-          monthly_budget: number
+          monthly_budget: string
           updated_at: string
           user_id: string
         }
@@ -63,7 +63,7 @@ export type Database = {
           category: Database["public"]["Enums"]["expense_category"]
           created_at?: string
           id?: string
-          monthly_budget?: number
+          monthly_budget?: string
           updated_at?: string
           user_id: string
         }
@@ -71,7 +71,7 @@ export type Database = {
           category?: Database["public"]["Enums"]["expense_category"]
           created_at?: string
           id?: string
-          monthly_budget?: number
+          monthly_budget?: string
           updated_at?: string
           user_id?: string
         }
@@ -82,8 +82,8 @@ export type Database = {
           closing_day: number
           color: string | null
           created_at: string
-          credit_limit: number
-          current_bill: number
+          credit_limit: string
+          current_bill: string
           due_day: number
           id: string
           name: string
@@ -94,8 +94,8 @@ export type Database = {
           closing_day: number
           color?: string | null
           created_at?: string
-          credit_limit?: number
-          current_bill?: number
+          credit_limit?: string
+          current_bill?: string
           due_day: number
           id?: string
           name: string
@@ -106,8 +106,8 @@ export type Database = {
           closing_day?: number
           color?: string | null
           created_at?: string
-          credit_limit?: number
-          current_bill?: number
+          credit_limit?: string
+          current_bill?: string
           due_day?: number
           id?: string
           name?: string
@@ -149,37 +149,37 @@ export type Database = {
       financial_goals: {
         Row: {
           created_at: string | null
-          dollar_rate: number | null
+          dollar_rate: string | null
           id: string
-          invested_amount: number | null
+          invested_amount: string | null
           month_year: string
           notes: string | null
-          savings_goal: number | null
-          total_debts: number | null
+          savings_goal: string | null
+          total_debts: string | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
-          dollar_rate?: number | null
+          dollar_rate?: string | null
           id?: string
-          invested_amount?: number | null
+          invested_amount?: string | null
           month_year: string
           notes?: string | null
-          savings_goal?: number | null
-          total_debts?: number | null
+          savings_goal?: string | null
+          total_debts?: string | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
           created_at?: string | null
-          dollar_rate?: number | null
+          dollar_rate?: string | null
           id?: string
-          invested_amount?: number | null
+          invested_amount?: string | null
           month_year?: string
           notes?: string | null
-          savings_goal?: number | null
-          total_debts?: number | null
+          savings_goal?: string | null
+          total_debts?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -190,25 +190,25 @@ export type Database = {
           created_at: string | null
           id: string
           investment_id: string
-          price: number
+          price: string
           recorded_at: string
-          total_value: number
+          total_value: string
         }
         Insert: {
           created_at?: string | null
           id?: string
           investment_id: string
-          price: number
+          price: string
           recorded_at: string
-          total_value: number
+          total_value: string
         }
         Update: {
           created_at?: string | null
           id?: string
           investment_id?: string
-          price?: number
+          price?: string
           recorded_at?: string
-          total_value?: number
+          total_value?: string
         }
         Relationships: [
           {
@@ -222,42 +222,42 @@ export type Database = {
       }
       investments: {
         Row: {
-          average_price: number | null
+          average_price: string | null
           created_at: string | null
           currency: string | null
-          current_price: number | null
+          current_price: string | null
           id: string
           name: string
           notes: string | null
-          quantity: number | null
+          quantity: string | null
           ticker: string | null
           type: string
           updated_at: string | null
           user_id: string
         }
         Insert: {
-          average_price?: number | null
+          average_price?: string | null
           created_at?: string | null
           currency?: string | null
-          current_price?: number | null
+          current_price?: string | null
           id?: string
           name: string
           notes?: string | null
-          quantity?: number | null
+          quantity?: string | null
           ticker?: string | null
           type: string
           updated_at?: string | null
           user_id: string
         }
         Update: {
-          average_price?: number | null
+          average_price?: string | null
           created_at?: string | null
           currency?: string | null
-          current_price?: number | null
+          current_price?: string | null
           id?: string
           name?: string
           notes?: string | null
-          quantity?: number | null
+          quantity?: string | null
           ticker?: string | null
           type?: string
           updated_at?: string | null
@@ -344,7 +344,7 @@ export type Database = {
       }
       recurring_templates: {
         Row: {
-          amount: number
+          amount: string
           category: Database["public"]["Enums"]["expense_category"] | null
           created_at: string | null
           day_of_month: number
@@ -356,7 +356,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount: number
+          amount: string
           category?: Database["public"]["Enums"]["expense_category"] | null
           created_at?: string | null
           day_of_month: number
@@ -368,7 +368,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          amount?: number
+          amount?: string
           category?: Database["public"]["Enums"]["expense_category"] | null
           created_at?: string | null
           day_of_month?: number
@@ -425,7 +425,7 @@ export type Database = {
       }
       transaction_items: {
         Row: {
-          amount: number
+          amount: string
           created_at: string | null
           description: string
           id: string
@@ -433,7 +433,7 @@ export type Database = {
           transaction_id: string
         }
         Insert: {
-          amount: number
+          amount: string
           created_at?: string | null
           description: string
           id?: string
@@ -441,7 +441,7 @@ export type Database = {
           transaction_id: string
         }
         Update: {
-          amount?: number
+          amount?: string
           created_at?: string | null
           description?: string
           id?: string
@@ -460,7 +460,7 @@ export type Database = {
       }
       transactions: {
         Row: {
-          amount: number
+          amount: string
           bank_account_id: string | null
           category: Database["public"]["Enums"]["expense_category"] | null
           completed_date: string | null
@@ -484,7 +484,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          amount: number
+          amount: string
           bank_account_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
           completed_date?: string | null
@@ -508,7 +508,7 @@ export type Database = {
           user_id: string
         }
         Update: {
-          amount?: number
+          amount?: string
           bank_account_id?: string | null
           category?: Database["public"]["Enums"]["expense_category"] | null
           completed_date?: string | null

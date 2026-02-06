@@ -6,11 +6,13 @@ import { Tables, TablesInsert, TablesUpdate } from "@/lib/database.types";
 import { startOfMonth, endOfMonth, format, addMonths } from "date-fns";
 import { getInstallmentDueDates } from "@/lib/utils/credit-card";
 import { ErrorMessages } from "@/lib/errors";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 type Transaction = Tables<"transactions">;
 
 export function useTransactions(month: Date) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startOfMonth(month), "yyyy-MM-dd");
   const end = format(endOfMonth(month), "yyyy-MM-dd");
 
@@ -25,7 +27,7 @@ export function useTransactions(month: Date) {
         .order("due_date", { ascending: true });
 
       if (error) throw error;
-      return data as Transaction[];
+      return decryptRows("transactions", data as Transaction[]);
     },
   });
 }
@@ -33,15 +35,19 @@ export function useTransactions(month: Date) {
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async (transaction: Omit<TablesInsert<"transactions">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
+      const row = { ...transaction, user_id: user.id };
+      const encrypted = await encryptRow("transactions", row as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("transactions")
-        .insert({ ...transaction, user_id: user.id })
+        .insert(encrypted)
         .select()
         .single();
 
@@ -58,12 +64,15 @@ export function useCreateTransaction() {
 export function useUpdateTransaction() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"transactions"> & { id: string }) => {
+      const encrypted = await encryptRow("transactions", updates as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("transactions")
-        .update(updates)
+        .update(encrypted)
         .eq("id", id)
         .select()
         .single();
@@ -220,6 +229,7 @@ export interface InstallmentTransactionInput {
 export function useCreateInstallmentTransaction() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async (input: InstallmentTransactionInput) => {
@@ -235,22 +245,24 @@ export function useCreateInstallmentTransaction() {
       const installmentAmount = input.amount / input.total_installments;
 
       // Create first transaction (parent)
+      const parentRow = await encryptRow("transactions", {
+        user_id: user.id,
+        description: input.description,
+        amount: installmentAmount,
+        type: input.type,
+        category: input.category as any,
+        payment_method: "credit",
+        credit_card_id: input.credit_card_id,
+        installment_number: 1,
+        total_installments: input.total_installments,
+        due_date: format(dueDates[0], "yyyy-MM-dd"),
+        status: "planned",
+        notes: input.notes,
+      } as Record<string, unknown>);
+
       const { data: parent, error: parentError } = await supabase
         .from("transactions")
-        .insert({
-          user_id: user.id,
-          description: input.description,
-          amount: installmentAmount,
-          type: input.type,
-          category: input.category as any,
-          payment_method: "credit",
-          credit_card_id: input.credit_card_id,
-          installment_number: 1,
-          total_installments: input.total_installments,
-          due_date: format(dueDates[0], "yyyy-MM-dd"),
-          status: "planned",
-          notes: input.notes,
-        })
+        .insert(parentRow)
         .select()
         .single();
 
@@ -258,7 +270,7 @@ export function useCreateInstallmentTransaction() {
 
       // Create remaining installments as children
       if (input.total_installments > 1) {
-        const children = dueDates.slice(1).map((dueDate, index) => ({
+        const childrenPlain = dueDates.slice(1).map((dueDate, index) => ({
           user_id: user.id,
           description: input.description,
           amount: installmentAmount,
@@ -274,9 +286,13 @@ export function useCreateInstallmentTransaction() {
           notes: input.notes,
         }));
 
+        const encryptedChildren = await Promise.all(
+          childrenPlain.map((c) => encryptRow("transactions", c as Record<string, unknown>))
+        );
+
         const { error: childError } = await supabase
           .from("transactions")
-          .insert(children);
+          .insert(encryptedChildren);
 
         if (childError) throw childError;
       }
@@ -342,6 +358,7 @@ export function useBatchUncompleteTransactions() {
 
 export function useTransactionWithItems(transactionId: string | null) {
   const supabase = createClient();
+  const { decryptRow, decryptRows } = useCrypto();
 
   return useQuery({
     queryKey: ["transaction", transactionId],
@@ -358,7 +375,20 @@ export function useTransactionWithItems(transactionId: string | null) {
         .single();
 
       if (error) throw error;
-      return data;
+
+      const decryptedTransaction = await decryptRow(
+        "transactions",
+        data as Record<string, unknown>
+      );
+
+      if (data.transaction_items && Array.isArray(data.transaction_items)) {
+        (decryptedTransaction as any).transaction_items = await decryptRows(
+          "transaction_items",
+          data.transaction_items as Record<string, unknown>[]
+        );
+      }
+
+      return decryptedTransaction;
     },
     enabled: !!transactionId,
   });

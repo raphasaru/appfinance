@@ -68,7 +68,8 @@ export function getInstallmentDueDates(
  * @returns boolean
  */
 export function isDueSoon(dueDate: Date | string, daysThreshold: number = 3): boolean {
-  const due = typeof dueDate === 'string' ? new Date(dueDate) : dueDate
+  // Parse "yyyy-MM-dd" as local time (not UTC) by appending T00:00:00
+  const due = typeof dueDate === 'string' ? new Date(dueDate + 'T00:00:00') : dueDate
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
@@ -84,7 +85,8 @@ export function isDueSoon(dueDate: Date | string, daysThreshold: number = 3): bo
  * @returns boolean
  */
 export function isOverdue(dueDate: Date | string): boolean {
-  const due = typeof dueDate === 'string' ? new Date(dueDate) : dueDate
+  // Parse "yyyy-MM-dd" as local time (not UTC) by appending T00:00:00
+  const due = typeof dueDate === 'string' ? new Date(dueDate + 'T00:00:00') : dueDate
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 

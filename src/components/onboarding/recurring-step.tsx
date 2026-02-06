@@ -180,7 +180,7 @@ export function RecurringStep({ onNext }: StepProps) {
                   category: formData.type === "expense" ? (formData.category || null) : null,
                   day_of_month: parseInt(formData.day_of_month),
                   is_active: true,
-                })
+                } as any)
                 toast.success("Recorrente adicionada")
                 setFormData({
                   description: "",

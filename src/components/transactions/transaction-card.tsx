@@ -189,7 +189,7 @@ export function TransactionCard({
         </div>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
           <span>
-            {format(new Date(transaction.due_date), "dd MMM", { locale: ptBR })}
+            {format(new Date(transaction.due_date + "T00:00:00"), "dd MMM", { locale: ptBR })}
           </span>
           <span className="text-muted-foreground/50">•</span>
           <span>{getCategoryLabel(category)}</span>

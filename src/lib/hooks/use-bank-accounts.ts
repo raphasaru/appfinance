@@ -4,11 +4,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/lib/database.types";
 import { ErrorMessages } from "@/lib/errors";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 type BankAccount = Tables<"bank_accounts">;
 
 export function useBankAccounts() {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
 
   return useQuery({
     queryKey: ["bank-accounts"],
@@ -19,7 +21,7 @@ export function useBankAccounts() {
         .order("name", { ascending: true });
 
       if (error) throw error;
-      return data as BankAccount[];
+      return decryptRows("bank_accounts", data as BankAccount[]);
     },
   });
 }
@@ -27,15 +29,18 @@ export function useBankAccounts() {
 export function useCreateBankAccount() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async (account: Omit<TablesInsert<"bank_accounts">, "user_id">) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error(ErrorMessages.NOT_AUTHENTICATED);
 
+      const encrypted = await encryptRow("bank_accounts", { ...account, user_id: user.id } as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("bank_accounts")
-        .insert({ ...account, user_id: user.id })
+        .insert(encrypted)
         .select()
         .single();
 
@@ -51,12 +56,15 @@ export function useCreateBankAccount() {
 export function useUpdateBankAccount() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: TablesUpdate<"bank_accounts"> & { id: string }) => {
+      const encrypted = await encryptRow("bank_accounts", updates as Record<string, unknown>);
+
       const { data, error } = await supabase
         .from("bank_accounts")
-        .update(updates)
+        .update(encrypted)
         .eq("id", id)
         .select()
         .single();

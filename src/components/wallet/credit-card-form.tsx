@@ -123,10 +123,10 @@ export function CreditCardForm({
 
     try {
       if (isEditing && card) {
-        await updateMutation.mutateAsync({ id: card.id, ...payload });
+        await updateMutation.mutateAsync({ id: card.id, ...payload } as any);
         toast.success("Cartão atualizado!");
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync(payload as any);
         toast.success("Cartão criado!");
       }
       onOpenChange(false);

@@ -52,7 +52,7 @@ export function AccountsStep({ onNext }: StepProps) {
         bank_name: bankLabel,
         type: formData.type,
         balance: parseFloat(formData.balance) || 0,
-      })
+      } as any)
       toast.success("Conta adicionada")
       setFormData({ name: "", bank_name: "", type: "checking", balance: "" })
       setCustomBankName("")

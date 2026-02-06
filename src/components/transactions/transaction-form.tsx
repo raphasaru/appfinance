@@ -229,7 +229,7 @@ export function TransactionForm({
           payment_method: "credit",
           credit_card_id: selectedCard.id,
           total_installments: data.installments,
-          purchase_date: new Date(data.due_date),
+          purchase_date: new Date(data.due_date + "T00:00:00"),
           closing_day: selectedCard.closing_day,
           due_day: selectedCard.due_day,
         });
@@ -261,10 +261,10 @@ export function TransactionForm({
 
     try {
       if (isEditing && transaction) {
-        await updateMutation.mutateAsync({ id: transaction.id, ...payload });
+        await updateMutation.mutateAsync({ id: transaction.id, ...payload } as any);
         toast.success("Transação atualizada!");
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync(payload as any);
         toast.success("Transação criada!");
       }
       onOpenChange(false);

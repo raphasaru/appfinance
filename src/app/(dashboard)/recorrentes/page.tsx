@@ -104,10 +104,10 @@ export default function RecorrentesPage() {
 
     try {
       if (editingId) {
-        await updateMutation.mutateAsync({ id: editingId, ...payload });
+        await updateMutation.mutateAsync({ id: editingId, ...payload } as any);
         toast.success("Template atualizado!");
       } else {
-        await createMutation.mutateAsync(payload);
+        await createMutation.mutateAsync(payload as any);
         toast.success("Template criado!");
       }
       setFormOpen(false);
@@ -156,7 +156,7 @@ export default function RecorrentesPage() {
     setSeeding(true);
     try {
       for (const template of initialTemplates) {
-        await createMutation.mutateAsync(template);
+        await createMutation.mutateAsync(template as any);
       }
       toast.success(`${initialTemplates.length} templates importados!`);
     } catch {

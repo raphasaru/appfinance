@@ -3,12 +3,14 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { Database } from '@/lib/database.types'
+import { useCrypto } from '@/components/providers/crypto-provider'
 
 type TransactionItem = Database['public']['Tables']['transaction_items']['Row']
 type TransactionItemInsert = Database['public']['Tables']['transaction_items']['Insert']
 
 export function useTransactionItems(transactionId: string | null) {
   const supabase = createClient()
+  const { decryptRows } = useCrypto()
 
   return useQuery({
     queryKey: ['transaction-items', transactionId],
@@ -22,7 +24,7 @@ export function useTransactionItems(transactionId: string | null) {
         .order('created_at', { ascending: true })
 
       if (error) throw error
-      return data as TransactionItem[]
+      return decryptRows('transaction_items', data as TransactionItem[])
     },
     enabled: !!transactionId,
   })
@@ -31,12 +33,15 @@ export function useTransactionItems(transactionId: string | null) {
 export function useCreateTransactionItem() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const { encryptRow } = useCrypto()
 
   return useMutation({
     mutationFn: async (item: TransactionItemInsert) => {
+      const encrypted = await encryptRow('transaction_items', item as Record<string, unknown>)
+
       const { data, error } = await supabase
         .from('transaction_items')
-        .insert(item)
+        .insert(encrypted)
         .select()
         .single()
 
@@ -53,12 +58,15 @@ export function useCreateTransactionItem() {
 export function useUpdateTransactionItem() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const { encryptRow } = useCrypto()
 
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<TransactionItem> & { id: string }) => {
+      const encrypted = await encryptRow('transaction_items', updates as Record<string, unknown>)
+
       const { data, error } = await supabase
         .from('transaction_items')
-        .update(updates)
+        .update(encrypted)
         .eq('id', id)
         .select()
         .single()
@@ -97,14 +105,19 @@ export function useDeleteTransactionItem() {
 export function useBulkCreateTransactionItems() {
   const supabase = createClient()
   const queryClient = useQueryClient()
+  const { encryptRow } = useCrypto()
 
   return useMutation({
     mutationFn: async (items: TransactionItemInsert[]) => {
       if (items.length === 0) return []
 
+      const encrypted = await Promise.all(
+        items.map((item) => encryptRow('transaction_items', item as Record<string, unknown>))
+      )
+
       const { data, error } = await supabase
         .from('transaction_items')
-        .insert(items)
+        .insert(encrypted)
         .select()
 
       if (error) throw error

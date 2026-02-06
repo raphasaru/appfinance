@@ -295,7 +295,8 @@ async function createTransactions(
   userId: string,
   transactions: ExtractedTransaction[]
 ): Promise<{ success: boolean; created: number; error?: string }> {
-  const today = new Date().toISOString().split("T")[0];
+  // Use Brasília timezone (UTC-3) to get correct local date
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
   const records = transactions.map((t) => ({
     user_id: userId,

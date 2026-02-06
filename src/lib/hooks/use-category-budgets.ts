@@ -5,12 +5,14 @@ import { createClient } from "@/lib/supabase/client";
 import { Tables, TablesInsert, Enums } from "@/lib/database.types";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { ErrorMessages } from "@/lib/errors";
+import { useCrypto } from "@/components/providers/crypto-provider";
 
 type CategoryBudget = Tables<"category_budgets">;
 type ExpenseCategory = Enums<"expense_category">;
 
 export function useCategoryBudgets() {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
 
   return useQuery({
     queryKey: ["category-budgets"],
@@ -21,7 +23,7 @@ export function useCategoryBudgets() {
         .order("category", { ascending: true });
 
       if (error) throw error;
-      return data as CategoryBudget[];
+      return decryptRows("category_budgets", data as CategoryBudget[]);
     },
   });
 }
@@ -29,6 +31,7 @@ export function useCategoryBudgets() {
 export function useUpsertCategoryBudget() {
   const queryClient = useQueryClient();
   const supabase = createClient();
+  const { encryptRow } = useCrypto();
 
   return useMutation({
     mutationFn: async (budgets: Array<{ category: ExpenseCategory; monthly_budget: number }>) => {
@@ -45,7 +48,7 @@ export function useUpsertCategoryBudget() {
 
       // Separate updates and inserts
       const updates: Array<{ id: string; monthly_budget: number }> = [];
-      const inserts: Array<TablesInsert<"category_budgets">> = [];
+      const inserts: any[] = [];
 
       for (const budget of budgets) {
         const existingId = existingMap.get(budget.category);
@@ -60,18 +63,22 @@ export function useUpsertCategoryBudget() {
         }
       }
 
-      // Perform updates
+      // Perform updates (encrypt monthly_budget)
       for (const update of updates) {
+        const encrypted = await encryptRow("category_budgets", { monthly_budget: update.monthly_budget } as Record<string, unknown>);
         const { error } = await supabase
           .from("category_budgets")
-          .update({ monthly_budget: update.monthly_budget })
+          .update(encrypted)
           .eq("id", update.id);
         if (error) throw error;
       }
 
-      // Perform inserts
+      // Perform inserts (encrypt monthly_budget)
       if (inserts.length > 0) {
-        const { error } = await supabase.from("category_budgets").insert(inserts);
+        const encryptedInserts = await Promise.all(
+          inserts.map((i) => encryptRow("category_budgets", i as Record<string, unknown>))
+        );
+        const { error } = await supabase.from("category_budgets").insert(encryptedInserts);
         if (error) throw error;
       }
 
@@ -86,6 +93,7 @@ export function useUpsertCategoryBudget() {
 // Get actual spending per category for a specific month
 export function useCategorySpending(month: Date) {
   const supabase = createClient();
+  const { decryptRows } = useCrypto();
   const start = format(startOfMonth(month), "yyyy-MM-dd");
   const end = format(endOfMonth(month), "yyyy-MM-dd");
 
@@ -101,10 +109,12 @@ export function useCategorySpending(month: Date) {
 
       if (error) throw error;
 
+      const decrypted = await decryptRows("transactions", (data || []) as Record<string, unknown>[]);
+
       // Aggregate spending by category
       const spending: Record<ExpenseCategory, number> = {} as Record<ExpenseCategory, number>;
 
-      for (const transaction of data || []) {
+      for (const transaction of decrypted as any[]) {
         if (transaction.category) {
           const cat = transaction.category as ExpenseCategory;
           spending[cat] = (spending[cat] || 0) + Number(transaction.amount);

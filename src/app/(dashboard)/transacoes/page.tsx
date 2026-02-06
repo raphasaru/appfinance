@@ -77,7 +77,7 @@ export default function TransacoesPage() {
 
       switch (sortField) {
         case "date":
-          comparison = new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
+          comparison = new Date(a.due_date + "T00:00:00").getTime() - new Date(b.due_date + "T00:00:00").getTime();
           break;
         case "description":
           comparison = a.description.localeCompare(b.description, "pt-BR");
